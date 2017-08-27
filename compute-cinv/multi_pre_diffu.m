@@ -21,14 +21,19 @@ function [C_pre] = multi_pre(C, A, B, E, K, XUset, Dmax, epsilon)
 	n = C.Dim;	   % system dimension
 	N = length(A); % number of systems
 
-	C_pre = Polyhedron('H', zeros(0,n+1));
-    for i = 1:N
-		newpoly1 = multi_pre(C, {A{i}}, {B{i}}, {E{i}}, {K{i}}, XUset, Dmax{i}, epsilon);
-		newpoly1 = myMinHRep(newpoly1);
+	% Compute all projections
+	projections = cell(1, 2*N);
+	for i=1:2*N
+		sys_n = 1 + floor((i-1)/2);
+		d = sign(2*mod(i-1,2)-1) * Dmax{sys_n};
+		projections{i} = multi_pre(C, {A{sys_n}}, {B{sys_n}}, {E{sys_n}}, ...
+								   {K{sys_n}}, XUset, d, epsilon);
+		projections{i} = myMinHRep(projections{i});
+	end
 
-		newpoly2 = multi_pre(C, {A{i}}, {B{i}}, {E{i}}, {K{i}}, XUset, -Dmax{i}, epsilon);
-		newpoly2 = myMinHRep(newpoly2);
-
-        C_pre = Polyhedron('H', [C_pre.H; newpoly1.H; newpoly2.H]); % intersect
+	C_pre = Polyhedron('H', zeros(0, n+1));
+	for i=1:2*N
+        C_pre = Polyhedron('H', [C_pre.H; projections{i}.H]); % intersect
 		C_pre = myMinHRep(C_pre);
-    end
+	end
+

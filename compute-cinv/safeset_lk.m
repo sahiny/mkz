@@ -94,10 +94,10 @@ XUset = Polyhedron('H', [-K 1 con.df_max; K -1 con.df_max]);
 C = C0;
 iter = 0;
 tic;
-% while not (C <= multi_pre_diffu(C, A_vertices_discrete, ...
-                % B_vertices_discrete, E_vertices_discrete, ...
-                % [], XUset, D_max_vertices, 0.0))
-while true
+while not (C <= multi_pre_diffu(C, A_vertices_discrete, ...
+                B_vertices_discrete, E_vertices_discrete, ...
+                [], XUset, D_max_vertices, 0.0))
+% while true
   Cpre = multi_pre_diffu(C, A_vertices_discrete, B_vertices_discrete, ...
                          E_vertices_discrete, [], XUset, D_max_vertices, 0.005);
 
@@ -108,9 +108,7 @@ while true
   end
 
   C = Polyhedron('A', [Cpre.A; C0.A], 'b', [Cpre.b; C0.b]);
-  disp(['before minHRep: ', num2str(size(C.A,1))])
   C = myMinHRep(C);
-  disp(['after minHRep: ', num2str(size(C.A,1))])
 
   cc = C.chebyCenter;
   time = toc;
