@@ -256,6 +256,19 @@ elems(17).Max = [];
 elems(17).DocUnits = sprintf('N');
 elems(17).Description = sprintf('front right vertical force');
 
+elems(18) = Simulink.BusElement;
+elems(18).Name = 'Fx';
+elems(18).Dimensions = 1;
+elems(18).DimensionsMode = 'Fixed';
+elems(18).DataType = 'double';
+elems(18).SampleTime = -1;
+elems(18).Complexity = 'real';
+elems(18).Min = [];
+elems(18).Max = [];
+elems(18).DocUnits = sprintf('N');
+elems(18).Description = sprintf('longitudinal force');
+
+
 DataBus = Simulink.Bus;
 DataBus.HeaderFile = '';
 DataBus.Description = '';
@@ -339,6 +352,19 @@ elems(6).Max = [];
 elems(6).DocUnits = sprintf('rad/s');
 elems(6).Description = sprintf('yaw rate (vehicle body)');
 
+elems(7) = Simulink.BusElement;
+elems(7).Name = 'h';
+elems(7).Dimensions = 1;
+elems(7).DimensionsMode = 'Fixed';
+elems(7).DataType = 'double';
+elems(7).SampleTime = -1;
+elems(7).Complexity = 'real';
+elems(7).Min = [];
+elems(7).Max = [];
+elems(7).DocUnits = sprintf('m');
+elems(6).Description = sprintf('headway');
+
+
 LKBus = Simulink.Bus;
 LKBus.HeaderFile = '';
 LKBus.Description = '';
@@ -346,7 +372,7 @@ LKBus.DataScope = 'Auto';
 LKBus.Alignment = -1;
 LKBus.Elements = elems;
 clear elems;
-assignin('base','LKBus', LKBus);
+assignin('base','LKACCBus', LKBus);
 
 % Bus object: RoadBus 
 clear elems;
