@@ -72,6 +72,10 @@ function sys=mdlDerivatives(~,x,u)
   Iz = 3270;
 
   mu = u(1);
+  if mu < 1
+     sys = [0;0;0;0];
+     return
+  end
   r_d = u(2);
   delta_f = u(3);
 
@@ -83,8 +87,8 @@ function sys=mdlDerivatives(~,x,u)
   E_lk = [0; 0; -1; 0];  
   
   sys = A_lk * x + B_lk * delta_f + E_lk * r_d;
-  sys
-% end mdlDerivatives
+
+  % end mdlDerivatives
 %
 %=============================================================================
 % mdlOutputs

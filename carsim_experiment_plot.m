@@ -1,9 +1,9 @@
 veh_path = load('C:/MKZ/mcity/fixed_path.ascii');
 
-end_time = length(data_lk.y.Time)-1;
+end_time = length(lk_acc_state.y.Time)-1;
 
 L_lk = load('lk_pcis_controller.mat');
-L_acc = load('acc_pcis_controller.mat')
+L_acc = load('acc_pcis_controller.mat');
 
 val = exist('data_lk_validate');
 
@@ -11,7 +11,7 @@ figure(1)
 clf; hold on;
 subplot(411)
 hold on
-plot(data_lk.y.Time, data_lk.y.Data)
+plot(lk_acc_state.y.Time, lk_acc_state.y.Data)
 if val
     plot(data_lk_validate.Time, data_lk_validate.Data(:,1), '--g')
 end
@@ -22,7 +22,7 @@ ylabel('y')
 
 subplot(412)
 hold on
-plot(data_lk.nu.Time, data_lk.nu.Data)
+plot(lk_acc_state.nu.Time, lk_acc_state.nu.Data)
 if val
     plot(data_lk_validate.Time, data_lk_validate.Data(:,2), '--g')
 end
@@ -31,7 +31,7 @@ ylabel('nu')
 
 subplot(413)
 hold on
-plot(data_lk.dPsi.Time, data_lk.dPsi.Data)
+plot(lk_acc_state.dPsi.Time, lk_acc_state.dPsi.Data)
 if val
     plot(data_lk_validate.Time, data_lk_validate.Data(:,3), '--g')
 end
@@ -40,7 +40,7 @@ ylabel('\Delta \Psi')
 
 subplot(414)
 hold on
-plot(data_lk.r.Time, data_lk.r.Data)
+plot(lk_acc_state.r.Time, lk_acc_state.r.Data)
 if val
     plot(data_lk_validate.Time, data_lk_validate.Data(:, 4), '--g')
 end
@@ -50,7 +50,7 @@ ylabel('r')
 figure(2); clf
 subplot(311)
 hold on 
-plot(data_lk.mu.Time, data_lk.mu.Data(:))
+plot(lk_acc_state.mu.Time, lk_acc_state.mu.Data(:))
 plot(xlim, [L_acc.con.u_max L_acc.con.u_max], '--')
 plot(xlim, [L_acc.con.u_min L_acc.con.u_min], '--')
 ylabel('mu')
@@ -65,7 +65,7 @@ ylabel('F_w')
 
 subplot(313)
 hold on
-plot(r_d.Time, r_d.Data(:))
+plot(lk_acc_state.r_d.Time, lk_acc_state.r_d.Data(:))
 plot(xlim, [L_lk.con.rd_max L_lk.con.rd_max], '--')
 plot(xlim, [-L_lk.con.rd_max -L_lk.con.rd_max], '--')
 ylim([-2.5*L_lk.con.rd_max, 2.5*L_lk.con.rd_max])
@@ -76,8 +76,8 @@ clf; hold on;
 subplot(411)
 hold on
 plot(delta_f.Time, delta_f.Data(:), 'k--')
-plot(data.steer_L1.Time, data.steer_L1.Data, 'b')
-plot(data.steer_R1.Time, data.steer_R1.Data, 'r')
+plot(rawdata.steer_L1.Time, rawdata.steer_L1.Data, 'b')
+plot(rawdata.steer_R1.Time, rawdata.steer_R1.Data, 'r')
 plot(xlim, [L_lk.con.df_max L_lk.con.df_max], '--')
 plot(xlim, [-L_lk.con.df_max -L_lk.con.df_max], '--')
 ylim([-1.1*L_lk.con.df_max, 1.1*L_lk.con.df_max])
@@ -92,7 +92,7 @@ ylabel('poly_dist')
 
 subplot(413)
 hold on
-plot(Fx.Time, Fx.Data)
+plot(rawdata.Fx.Time, rawdata.Fx.Data)
 plot(F_w.Time, F_w.Data(:), 'k--')
 plot(xlim, [L_acc.con.Fw_max L_acc.con.Fw_max], '--')
 plot(xlim, [L_acc.con.Fw_min L_acc.con.Fw_min], '--')

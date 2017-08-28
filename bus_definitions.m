@@ -362,7 +362,19 @@ elems(7).Complexity = 'real';
 elems(7).Min = [];
 elems(7).Max = [];
 elems(7).DocUnits = sprintf('m');
-elems(6).Description = sprintf('headway');
+elems(7).Description = sprintf('headway');
+
+elems(8) = Simulink.BusElement;
+elems(8).Name = 'r_d';
+elems(8).Dimensions = 1;
+elems(8).DimensionsMode = 'Fixed';
+elems(8).DataType = 'double';
+elems(8).SampleTime = -1;
+elems(8).Complexity = 'real';
+elems(8).Min = [];
+elems(8).Max = [];
+elems(8).DocUnits = sprintf('rad/s');
+elems(8).Description = sprintf('road yaw rate');
 
 
 LKBus = Simulink.Bus;

@@ -81,11 +81,10 @@
 
     % inputs
     function out = getNumInputsImpl(obj)
-      out = 2;
+      out = 1;
     end
-    function [o1, o2] = getInputNamesImpl(obj)
+    function [o1] = getInputNamesImpl(obj)
       o1 = 'lk_state';
-      o2 = 'r_d';
     end
     % outputs
     function out = getNumOutputsImpl(obj)
@@ -112,10 +111,11 @@
        c2 = false;
     end
     % update
-    function updateImpl(obj, lk_state, r_d)
+    function updateImpl(obj, lk_state)
       x_lk = [lk_state.y; lk_state.nu; lk_state.dPsi; lk_state.r];
 
       mu = lk_state.mu;
+      r_d = lk_state.r_d;
       
       if mu < 1
           obj.delta_f = 0;
@@ -190,7 +190,7 @@
         control_info.qp_status = 0;
     end
     
-    function [f1, f2] = isInputDirectFeedthroughImpl(~, ~, ~)
+    function [f1, f2] = isInputDirectFeedthroughImpl(~, ~)
         f1 = false;
         f2 = false;
     end
