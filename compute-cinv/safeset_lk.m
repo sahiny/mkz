@@ -104,7 +104,7 @@ while not (C-rho_ball <= Ct)
   C = Ct;
 
   Cpre = pre_forall_exists(C, A_vert_d, B_vert_d, ...
-                           E_vert_d, [], XUset, D_max_vert, rho);
+                           E_vert_d, [], XUset, D_max_vert, con.rho_lk);
 
   if Cpre.isEmptySet
     disp('returned empty')
@@ -124,13 +124,7 @@ while not (C-rho_ball <= Ct)
 end
 
 if ~isEmptySet(Ct)
-  disp('finished computing, checking control invariance...')
-  % Check
-  Ctt = pre_forall_exists(C, A_vert_d, B_vert_d, ...
-                          E_vert_d, [], XUset, D_max_vert, 0.);
-
-  assert(Ct < Ctt);    % if no error Ct is controlled invariant
-
+  disp('finished computing with nonempty set!')
   poly_A = Ct.A;
   poly_b = Ct.b;
 

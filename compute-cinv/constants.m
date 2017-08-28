@@ -37,6 +37,6 @@ function con = constants
     con.dt = 0.1;
 
     % Rho factors for convergence
-    con.rho_lk = [0.05; 0.05; 0.05; 0.05];
+    con.rho_lk = [0.01; 0.01; 0.01; 0.01];  % finishes at iteration 16 (39000 seconds)
     con.rho_acc = [0.05; 0.05];
 end
