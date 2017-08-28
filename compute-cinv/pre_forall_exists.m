@@ -24,7 +24,7 @@ function [C_pre] = pre_forall_exists(C, A, B, E, K, XUset, dmax, rho)
 
 	% Compute all projections
 	proj = cell(1, 2*N);
-	for i=1:2*N
+	parfor i=1:2*N
 		sys_n = 1 + floor((i-1)/2);
 		d = sign(2*mod(i-1,2)-1) * dmax{sys_n};
 		proj{i} = pre_exists_forall(C, {A{sys_n}}, {B{sys_n}}, {E{sys_n}}, ...
