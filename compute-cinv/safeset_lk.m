@@ -87,14 +87,12 @@ E_vert_d = cellfun(@(E) con.dt*E,          E_vert, 'UniformOutput', 0);
 %%%%%%% Compute invariant set %%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-rho = 0.005;
-
 C0 = Polyhedron('A', [eye(4); -eye(4)], ...
 			          'b', [con.y_max; con.nu_max; con.psi_max; con.r_max; ...
                       con.y_max; con.nu_max; con.psi_max; con.r_max]);
 XUset = Polyhedron('H', [-K 1 con.df_max; K -1 con.df_max]);
 
-rho_ball = Polyhedron('A', [eye(4); -eye(4)], 'b', rho*ones(8,1));
+rho_ball = Polyhedron('A', [eye(4); -eye(4)], 'b', repmat(con.rho_lk,2,1));
 
 % Initialize
 C = Polyhedron('H', [0 0 0 0 1]);
