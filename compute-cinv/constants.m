@@ -4,8 +4,8 @@ function con = constants
     con.m = 1800 ; %kg
 
     % ACC parameters
-    con.f0bar = -24;
-    con.f1bar = 19;
+    con.f0bar = 74.63;
+    con.f1bar = 40.59;
 
     % ACC bounds
     con.u_min = 25/3.6;
@@ -35,4 +35,8 @@ function con = constants
 
     % Time discretization
     con.dt = 0.1;
+
+    % Rho factors for convergence
+    con.rho_lk = [0.01; 0.01; 0.01; 0.01];  % finishes at iteration 16 (39000 seconds)
+    con.rho_acc = [0.05; 0.05];
 end

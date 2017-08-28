@@ -1,84 +1,109 @@
-veh_path = load('C:/MKZ/mcity/mcity_outer.ascii');
+veh_path = load('C:/MKZ/mcity/fixed_path.ascii');
 
-end_time = length(data_lk.y.Time)-1;
+end_time = length(lk_acc_state.y.Time)-1;
 
-load 'lk_pcis_controller.mat';
-
-y_max = con.y_max;
-delta_f_max = con.df_max;
-nu_max = con.nu_max;
-r_d_max = con.rd_max;
+L_lk = load('lk_pcis_controller.mat');
+L_acc = load('acc_pcis_controller.mat');
 
 val = exist('data_lk_validate');
 
 figure(1)
 clf; hold on;
-subplot(211)
+subplot(411)
 hold on
-plot(data_lk.y.Time, data_lk.y.Data)
+plot(lk_acc_state.y.Time, lk_acc_state.y.Data)
 if val
     plot(data_lk_validate.Time, data_lk_validate.Data(:,1), '--g')
 end
-plot(xlim, [y_max y_max], '--')
-plot(xlim, [-y_max -y_max], '--')
-ylim([-1.1*y_max, 1.1*y_max]);
+plot(xlim, [L_lk.con.y_max L_lk.con.y_max], '--')
+plot(xlim, [-L_lk.con.y_max -L_lk.con.y_max], '--')
+ylim([-1.1*L_lk.con.y_max, 1.1*L_lk.con.y_max]);
 ylabel('y')
 
-subplot(212)
+subplot(412)
 hold on
-plot(data_lk.nu.Time, data_lk.nu.Data)
+plot(lk_acc_state.nu.Time, lk_acc_state.nu.Data)
 if val
     plot(data_lk_validate.Time, data_lk_validate.Data(:,2), '--g')
 end
-ylim([-1.1*nu_max 1.1*nu_max]);
+ylim([-1.1*L_lk.con.nu_max 1.1*L_lk.con.nu_max]);
 ylabel('nu')
 
-figure(2)
-clf; hold on;
-
-subplot(311)
+subplot(413)
 hold on
-plot(data_lk.dPsi.Time, data_lk.dPsi.Data)
+plot(lk_acc_state.dPsi.Time, lk_acc_state.dPsi.Data)
 if val
     plot(data_lk_validate.Time, data_lk_validate.Data(:,3), '--g')
 end
-ylim([-1.1*con.psi_max 1.1*con.psi_max]);
+ylim([-1.1*L_lk.con.psi_max 1.1*L_lk.con.psi_max]);
 ylabel('\Delta \Psi')
 
-subplot(312)
+subplot(414)
 hold on
-plot(data_lk.r.Time, data_lk.r.Data)
+plot(lk_acc_state.r.Time, lk_acc_state.r.Data)
 if val
     plot(data_lk_validate.Time, data_lk_validate.Data(:, 4), '--g')
 end
-ylim([-1.1*con.r_max 1.1*con.r_max])
+ylim([-1.1*L_lk.con.r_max 1.1*L_lk.con.r_max])
 ylabel('r')
+
+figure(2); clf
+subplot(311)
+hold on 
+plot(lk_acc_state.mu.Time, lk_acc_state.mu.Data(:))
+plot(xlim, [L_acc.con.u_max L_acc.con.u_max], '--')
+plot(xlim, [L_acc.con.u_min L_acc.con.u_min], '--')
+ylabel('mu')
+ylim([0, 3*L_acc.con.u_max])
+
+subplot(312)
+hold on
+plot(F_w.Time, F_w.Data(:))
+plot(xlim, [1.1*L_acc.con.Fw_max 1.1*L_acc.con.Fw_max], '--')
+plot(xlim, [1.1*L_acc.con.Fw_min 1.1*L_acc.con.Fw_min], '--')
+ylabel('F_w')
 
 subplot(313)
 hold on
-plot(r_d.Time, r_d.Data(:))
-plot(xlim, [r_d_max r_d_max], '--')
-plot(xlim, [-r_d_max -r_d_max], '--')
-ylim([-2.5*r_d_max, 2.5*r_d_max])
-
+plot(lk_acc_state.r_d.Time, lk_acc_state.r_d.Data(:))
+plot(xlim, [L_lk.con.rd_max L_lk.con.rd_max], '--')
+plot(xlim, [-L_lk.con.rd_max -L_lk.con.rd_max], '--')
+ylim([-2.5*L_lk.con.rd_max, 2.5*L_lk.con.rd_max])
 ylabel('r_d')
 
 figure(3)
 clf; hold on;
-subplot(211)
+subplot(411)
 hold on
 plot(delta_f.Time, delta_f.Data(:), 'k--')
-plot(data.steer_L1.Time, data.steer_L1.Data, 'b')
-plot(data.steer_R1.Time, data.steer_R1.Data, 'r')
-plot(xlim, [delta_f_max delta_f_max], '--')
-plot(xlim, [-delta_f_max -delta_f_max], '--')
-ylim([-1.1*delta_f_max, 1.1*delta_f_max])
+plot(rawdata.steer_L1.Time, rawdata.steer_L1.Data, 'b')
+plot(rawdata.steer_R1.Time, rawdata.steer_R1.Data, 'r')
+plot(xlim, [L_lk.con.df_max L_lk.con.df_max], '--')
+plot(xlim, [-L_lk.con.df_max -L_lk.con.df_max], '--')
+ylim([-1.1*L_lk.con.df_max, 1.1*L_lk.con.df_max])
 ylabel('\delta_f')
 
-subplot(212)
+subplot(412)
 hold on
-plot(control_info.barrier_val.Time, control_info.barrier_val.Data)
-ylim([-0.1, 1.1*max(control_info.barrier_val.Data)])
+plot(lk_control_info.barrier_val.Time, lk_control_info.barrier_val.Data)
+ylim([-0.1, 1.1*max(lk_control_info.barrier_val.Data)])
 plot(xlim, [0 0], '--')
 ylabel('poly_dist')
+
+subplot(413)
+hold on
+plot(rawdata.Fx.Time, rawdata.Fx.Data)
+plot(F_w.Time, F_w.Data(:), 'k--')
+plot(xlim, [L_acc.con.Fw_max L_acc.con.Fw_max], '--')
+plot(xlim, [L_acc.con.Fw_min L_acc.con.Fw_min], '--')
+ylim([1.1*L_acc.con.Fw_min, 1.1*L_acc.con.Fw_max])
+ylabel('F_w')
+
+subplot(414)
+hold on
+plot(acc_control_info.barrier_val.Time, acc_control_info.barrier_val.Data)
+ylim([-0.1, 1.1*max(acc_control_info.barrier_val.Data)])
+plot(xlim, [0 0], '--')
+ylabel('poly_dist')
+
 

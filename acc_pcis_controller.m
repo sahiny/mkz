@@ -1,16 +1,14 @@
- classdef lk_pcis_controller < matlab.System & ...
+ classdef acc_pcis_controller < matlab.System & ...
                          matlab.system.mixin.Propagates & ...
                          matlab.system.mixin.Nondirect
   properties(Nontunable)
     M = 1800;
-    lf = 1.2;
-    lr = 1.65;
-    Caf = 140000;
-    Car = 120000;
-    Iz = 3270;
+    f0bar = 74.63;
+    f1bar = 40.59;
+    vl = 26/3.6;
 
-    H_x = diag(4);
-    f_x = zeros(4);
+    H_x = diag([1 0.01]);
+    f_x = [-28/3.6; 0];
     H_u = 1;
     f_u = 0;
 
@@ -19,18 +17,20 @@
   end
 
   properties(Access = private)
-    B_lk;
-    E_lk;
+    A_acc;
+    A_int;
+    B_acc;
+    E_acc;
     data;
   end
   
   properties(DiscreteState)
-    delta_f;
+    F_w;
     barrier_val;
   end
 
   methods
-    function obj = lk_pcis_controller(varargin)
+    function obj = acc_pcis_controller(varargin)
       % lk_controller: lane keeping controller based on a barrier QP.
       % Finds inputs s.t. L_f B (x,u) > -gam * B(x) which ensures positivity of B.
       % 
@@ -56,19 +56,28 @@
 
   methods(Access = protected)
     function setupImpl(obj)
-      obj.B_lk = [0; obj.Caf/obj.M; 0; obj.lf*obj.Caf/obj.Iz];
-      obj.E_lk = [0; 0; -1; 0];
-      data_temp = load('lk_pcis_controller');
+      data_temp = load('acc_pcis_controller', 'poly_A', 'poly_b', 'con');
       obj.data = data_temp;
+
+      A_acc_ct = [obj.f1bar/obj.M 0; -1 0];
+      B_acc_ct = [1/obj.M; 0];
+      E_acc_ct = [0; 0];
+
+      dt = obj.data.con.dt;
+
+      obj.A_int = eye(2)*dt + A_acc_ct * dt^2/2 * A_acc_ct^2 * dt^3/3/2 + A_acc_ct^3 * dt^4/4/3/2;
       
-      obj.delta_f = 0;
-      
+      obj.A_acc = eye(2) + A_acc_ct * dt + A_acc_ct^2 * dt^2/2 + A_acc_ct^3 * dt^3/3/2;
+      obj.B_acc = obj.A_int * B_acc_ct;
+      obj.E_acc = obj.A_int * E_acc_ct;
+
+      obj.F_w = 0;
       obj.barrier_val = 0;
     end
     
     function ds = getDiscreteStateImpl(obj)
         % Return structure of properties with DiscreteState attribute
-        ds.delta_f = obj.delta_f;
+        ds.F_w = obj.F_w;
     end
     
     function [sz,dt,cp] = getDiscreteStateSpecificationImpl(~,~)
@@ -84,14 +93,14 @@
       out = 1;
     end
     function [o1] = getInputNamesImpl(obj)
-      o1 = 'lk_state';
+      o1 = 'lk_acc_state';
     end
     % outputs
     function out = getNumOutputsImpl(obj)
       out = 2;
     end
     function [n1, n2] = getOutputNamesImpl(obj)
-      n1 = 'delta_f';
+      n1 = 'F_w';
       n2 = 'control_info';
     end
     function [o1, o2] = getOutputDataTypeImpl(obj)
@@ -111,35 +120,18 @@
        c2 = false;
     end
     % update
-    function updateImpl(obj, lk_state)
-      x_lk = [lk_state.y; lk_state.nu; lk_state.dPsi; lk_state.r];
+    function updateImpl(obj, state, r_d)
+      x_acc = [state.mu; state.h];
 
-      mu = lk_state.mu;
-      r_d = lk_state.r_d;
-      
-      if mu < 1
-          obj.delta_f = 0;
-          return
-      end
+      d_lk = state.nu * state.r;
        
-      A_lk = [0, 1, mu, 0; 
-          0, -(obj.Caf+obj.Car)/obj.M/mu, 0, ((obj.lr*obj.Car-obj.lf*obj.Caf)/obj.M/mu - mu); 
-          0, 0, 0, 1;
-          0, (obj.lr*obj.Car-obj.lf*obj.Caf)/obj.Iz/mu,  0, -(obj.lf^2 * obj.Caf + obj.lr^2 * obj.Car)/obj.Iz/mu];
-      
-      dt = obj.data.con.dt;
+      K_ct = [-obj.f0bar/obj.M - d_lk;
+              obj.vl];
 
-      A = eye(4) + A_lk * dt + A_lk^2 * dt^2/2 + A_lk^3 * dt^3/3/2;
-
-      A_int = eye(4)*dt + A_lk * dt^2/2 * A_lk^2 * dt^3/3/2 + A_lk^3 * dt^4/4/3/2;
-
-      B = A_int * obj.B_lk;
-      E = A_int * obj.E_lk;
-
-      % A = A_lk*obj.data.con.dt + eye(4);
-      % B = obj.B_lk*obj.data.con.dt;
-      % E = obj.E_lk*obj.data.con.dt;
-      K = zeros(4,1);
+      A = obj.A_acc;
+      B = obj.B_acc;        
+      K = obj.A_int * K_ct;
+      E = obj.E_acc;
       
       R_x = obj.H_x;
       r_x = obj.f_x;
@@ -150,49 +142,48 @@
       b_x = obj.data.poly_b;
 
       H = B'*R_x*B + R_u;
-      f = r_u + B'*R_x*(A*x_lk + K) + B'*R_x*E*r_d + B'*r_x;
+      f = r_u + B'*R_x*(A*x_acc + K) + B'*r_x;
       A_constr = [A_x*B; A_x*B; 1; -1];
-      b_constr = [b_x - A_x*A*x_lk - A_x*E*obj.data.con.rd_max; 
-                b_x - A_x*A*x_lk - A_x*E*(-obj.data.con.rd_max);
-                obj.data.con.df_max;
-                obj.data.con.df_max];
+      b_constr = [b_x - A_x*A*x_acc - A_x*K; 
+                b_x - A_x*A*x_acc - A_x*K;
+                obj.data.con.Fw_max;
+                -obj.data.con.Fw_min];
 
       % Objective 0.5 x' H x + f' x
       % 
       L = chol(H, 'lower');
       Linv = L\eye(size(H,1));
-  
+      
       [u, status] = mpcqpsolver(Linv, f, -A_constr, -b_constr, ...
                       [], zeros(0,1), ...
                       false(size(A_constr,1),1), obj.sol_opts);
       
-      % normalized distance from Polyhedron edge
-      scale_vec = [obj.data.con.y_max obj.data.con.nu_max ...
-                   obj.data.con.psi_max obj.data.con.r_max];
+      % distance from Polyhedron edge
+      scale_vec = [1 1];
       Da = A_x.*repmat(scale_vec, size(A_x,1), 1);
-      d_list = (b_x - A_x*x_lk)./sum(A_x.*A_x, 2) ...
+      d_list = (b_x - A_x*x_acc)./sum(A_x.*A_x, 2) ...
                 .*sqrt(sum(Da.*Da, 2));
       obj.barrier_val = min(d_list);
                   
       if status > 0
         % qp solved successfully
-        obj.delta_f = u;
+        obj.F_w = u;
       else
-        % infeasible: keep control constant
+        % infeasible: accelerate fixed
+        obj.F_w = 500;
       end
      
     end
 
-    function [delta_f, control_info] = outputImpl(obj, ~, ~)
-        delta_f = obj.delta_f;
+    function [F_w, control_info] = outputImpl(obj, ~, ~)
+        F_w = obj.F_w;
         control_info.barrier_val = obj.barrier_val;
         control_info.ddy = 0;
         control_info.qp_status = 0;
     end
     
-    function [f1, f2] = isInputDirectFeedthroughImpl(~, ~)
+    function [f1] = isInputDirectFeedthroughImpl(obj, ~)
         f1 = false;
-        f2 = false;
     end
   end
 end

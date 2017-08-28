@@ -51,9 +51,9 @@ end
 %%%%%%%%%%%% Discretize  %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-A_vertices_discrete = cellfun(@(A) eye(2) + con.dt*A, A_vertices, 'UniformOutput', 0);
-B_vertices_discrete = cellfun(@(B) con.dt*B,          B_vertices, 'UniformOutput', 0);
-K_vertices_discrete = cellfun(@(K) con.dt*K,          K_vertices, 'UniformOutput', 0);
+A_vert_d = cellfun(@(A) eye(2) + con.dt*A, A_vertices, 'UniformOutput', 0);
+B_vert_d = cellfun(@(B) con.dt*B,          B_vertices, 'UniformOutput', 0);
+K_vert_d = cellfun(@(K) con.dt*K,          K_vertices, 'UniformOutput', 0);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%% Compute invariant set %%%%%%%%%%%%%%%%%%%%
@@ -62,17 +62,53 @@ K_vertices_discrete = cellfun(@(K) con.dt*K,          K_vertices, 'UniformOutput
 C0 = Polyhedron('H', [1 0 con.u_max; -1 0 -con.u_min; 0 -1 -con.h_min]);
 XUset = Polyhedron('H', [0 0 1 con.Fw_max; 0 0 -1 -con.Fw_min]);
 
-C = C0;
-iter = 0;
-while not (C <= multi_pre_diffu(C, A_vertices_discrete, B_vertices_discrete, [], K_vertices_discrete, XUset, [], 0.0))
-  Cpre = multi_pre_diffu(C, A_vertices_discrete, B_vertices_discrete, [], K_vertices_discrete, XUset, [], 0.02);
-  C = Polyhedron('H', [Cpre.H; C0.H]); % intersect
+rho_ball = Polyhedron('A', [eye(2); -eye(2)], 'b', repmat(con.rho_acc,2,1));
 
-  minHRep(C);
+% Initialize
+C = Polyhedron('H', [0 0 1]);
+Ct = C0;
+iter = 0;
+tic;
+
+while not (C-rho_ball <= Ct)
+  C = Ct;
+
+  Cpre = pre_forall_exists(C, A_vert_d, B_vert_d, ...
+                           [], K_vert_d, XUset, [], con.rho_acc);
+
+  if Cpre.isEmptySet
+    disp('returned empty')
+    Ct = Cpre;
+    break
+  end
+
+  Ct = Polyhedron('A', [Cpre.A; C0.A], 'b', [Cpre.b; C0.b]);
+  Ct = myMinHRep(Ct);
+
+  cc = Ct.chebyCenter;
+  time = toc;
 
   iter = iter+1;
-  disp(sprintf('\n'))
-  disp(['iteration ', num2str(iter), ', ', num2str(size(C.A,1)), ' inequalities'])
+  disp(['iteration ', num2str(iter), ', ', num2str(size(C.A,1)), ...
+        ' ineqs, ball ', num2str(cc.r), ', time ', num2str(time)])
 end
 
-save('simulation/safeset_acc.mat', 'C', 'con', 'func_poly', 'A_vertices_discrete')
+if ~isEmptySet(Ct)
+  disp('finished computing, checking control invariance...')
+  % Check
+  Ctt = pre_forall_exists(Ct, A_vert_d, B_vert_d, ...
+                           [], K_vert_d, XUset, [], 0);
+
+  assert(Ct < Ctt);    % if no error Ct is controlled invariant
+
+  C_chain = {Ct};
+  for i=1:60
+    C_chain{end+1} = pre_forall_exists(C_chain{end}, A_vert_d, B_vert_d, ...
+                           [], K_vert_d, XUset, [], 0);
+  end
+
+  poly_A = Ct.A;
+  poly_b = Ct.b;
+
+  save('acc_pcis_controller', 'poly_A', 'poly_b', 'C_chain', 'con')
+end

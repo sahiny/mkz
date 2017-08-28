@@ -6,7 +6,7 @@ function [C_pre] = pre_forall_exists(C, A, B, E, K, XUset, dmax, rho)
 	%  di ∈ [-dmax{i}, dmax{i}]
 	%
 
-	if nargin < 7
+	if nargin < 8
 		rho = 0;
 	end
 
@@ -24,17 +24,31 @@ function [C_pre] = pre_forall_exists(C, A, B, E, K, XUset, dmax, rho)
 
 	% Compute all projections
 	proj = cell(1, 2*N);
-	parfor i=1:2*N
-		sys_n = 1 + floor((i-1)/2);
-		d = sign(2*mod(i-1,2)-1) * dmax{sys_n};
-		proj{i} = pre_exists_forall(C, {A{sys_n}}, {B{sys_n}}, {E{sys_n}}, ...
-								   {K{sys_n}}, XUset, d, rho);
-		proj{i} = myMinHRep(proj{i});
-	end
-
-	C_pre = Polyhedron('H', zeros(0, n+1));
-	for i=1:2*N
-        C_pre = Polyhedron('H', [C_pre.H; proj{i}.H]); % intersect
-		C_pre = myMinHRep(C_pre);
+	if isempty(dmax)
+		% Case without disturbance
+		parfor i=1:N
+			proj{i} = pre_exists_forall(C, {A{i}}, {B{i}}, [], ...
+									  					    {K{i}}, XUset, [], rho);
+			proj{i} = myMinHRep(proj{i});
+		end
+  	C_pre = Polyhedron('H', zeros(0, n+1));
+		for i=1:N
+	    C_pre = Polyhedron('H', [C_pre.H; proj{i}.H]); % intersect
+			C_pre = myMinHRep(C_pre);
+		end
+	else
+		% Case with disturbance
+		parfor i=1:2*N
+			sys_n = 1 + floor((i-1)/2);
+			d = sign(2*mod(i-1,2)-1) * dmax{sys_n};
+			proj{i} = pre_exists_forall(C, {A{sys_n}}, {B{sys_n}}, {E{sys_n}}, ...
+									   {K{sys_n}}, XUset, d, rho);
+			proj{i} = myMinHRep(proj{i});
+		end
+		C_pre = Polyhedron('H', zeros(0, n+1));
+		for i=1:2*N
+	    C_pre = Polyhedron('H', [C_pre.H; proj{i}.H]); % intersect
+			C_pre = myMinHRep(C_pre);
+		end
 	end
 

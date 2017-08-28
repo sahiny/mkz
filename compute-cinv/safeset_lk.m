@@ -87,14 +87,12 @@ E_vert_d = cellfun(@(E) con.dt*E,          E_vert, 'UniformOutput', 0);
 %%%%%%% Compute invariant set %%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-rho = 0.005;
-
 C0 = Polyhedron('A', [eye(4); -eye(4)], ...
 			          'b', [con.y_max; con.nu_max; con.psi_max; con.r_max; ...
                       con.y_max; con.nu_max; con.psi_max; con.r_max]);
 XUset = Polyhedron('H', [-K 1 con.df_max; K -1 con.df_max]);
 
-rho_ball = Polyhedron('A', [eye(4); -eye(4)], 'b', rho*ones(8,1));
+rho_ball = Polyhedron('A', [eye(4); -eye(4)], 'b', repmat(con.rho_lk,2,1));
 
 % Initialize
 C = Polyhedron('H', [0 0 0 0 1]);
@@ -106,7 +104,7 @@ while not (C-rho_ball <= Ct)
   C = Ct;
 
   Cpre = pre_forall_exists(C, A_vert_d, B_vert_d, ...
-                           E_vert_d, [], XUset, D_max_vert, rho);
+                           E_vert_d, [], XUset, D_max_vert, con.rho_lk);
 
   if Cpre.isEmptySet
     disp('returned empty')
@@ -126,13 +124,7 @@ while not (C-rho_ball <= Ct)
 end
 
 if ~isEmptySet(Ct)
-  disp('finished computing, checking control invariance...')
-  % Check
-  Ctt = pre_forall_exists(C, A_vert_d, B_vert_d, ...
-                          E_vert_d, [], XUset, D_max_vert, 0.);
-
-  assert(Ct < Ctt);    % if no error Ct is controlled invariant
-
+  disp('finished computing with nonempty set!')
   poly_A = Ct.A;
   poly_b = Ct.b;
 
