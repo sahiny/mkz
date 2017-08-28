@@ -42,26 +42,26 @@ sanity_check = 1;
 func_poly = compute_hull(f, [con.u_min con.u_max], sanity_check);
 
 % Build polytopes
-A_vertices = {};
-B_vertices = {};
-E_vertices = {};
-D_max_vertices = {};
+A_vert = {};
+B_vert = {};
+E_vert = {};
+D_max_vert = {};
 for vert = func_poly.V'
-    A_vertices{end+1} = double(subs(A, p, vert'));
-    B_vertices{end+1} = double(subs(B, p, vert'));
-    E_vertices{end+1} = double(subs(E, p, vert'));
-    D_max_vertices{end+1} = double(subs(D_max, p, vert'));
+    A_vert{end+1} = double(subs(A, p, vert'));
+    B_vert{end+1} = double(subs(B, p, vert'));
+    E_vert{end+1} = double(subs(E, p, vert'));
+    D_max_vert{end+1} = double(subs(D_max, p, vert'));
 end
 
-disp(['found ', num2str(length(A_vertices)), ' vertex systems'])
+disp(['found ', num2str(length(A_vert)), ' vertex systems'])
 
 if sanity_check
     % are matrices along curve contained in convex hull?
-    AV_cell = cellfun(@vec, A_vertices, 'UniformOutput', false);
+    AV_cell = cellfun(@vec, A_vert, 'UniformOutput', false);
     A_poly = Polyhedron('V', [AV_cell{:}]');
-    BV_cell = cellfun(@vec, B_vertices, 'UniformOutput', false);
+    BV_cell = cellfun(@vec, B_vert, 'UniformOutput', false);
     B_poly = Polyhedron('V', [BV_cell{:}]');
-    EV_cell = cellfun(@vec, E_vertices, 'UniformOutput', false);
+    EV_cell = cellfun(@vec, E_vert, 'UniformOutput', false);
     E_poly = Polyhedron('V', [EV_cell{:}]');
     for val = con.u_min:(con.u_max-con.u_min)/10:con.u_max
         assert(A_poly.contains(vec(double(subs(subs(A, p, f), v, val)))));
@@ -74,43 +74,50 @@ end
 %%%%%%%%%%%% Stabilize and discretize  %%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% K = joint_stab(A_vertices, B, sanity_check);
+% K = joint_stab(A_vert, B, sanity_check);
 K = zeros(1,4);
 
-A_vertices_stable = cellfun(@(A) A-B*K, A_vertices, 'UniformOutput', 0);
+A_vert_stable = cellfun(@(A) A-B*K, A_vert, 'UniformOutput', 0);
 
-A_vertices_discrete = cellfun(@(A) eye(4) + con.dt*A, A_vertices_stable, 'UniformOutput', 0);
-B_vertices_discrete = cellfun(@(B) con.dt*B,          B_vertices, 'UniformOutput', 0);
-E_vertices_discrete = cellfun(@(E) con.dt*E,          E_vertices, 'UniformOutput', 0);
+A_vert_d = cellfun(@(A) eye(4) + con.dt*A, A_vert_stable, 'UniformOutput', 0);
+B_vert_d = cellfun(@(B) con.dt*B,          B_vert, 'UniformOutput', 0);
+E_vert_d = cellfun(@(E) con.dt*E,          E_vert, 'UniformOutput', 0);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%% Compute invariant set %%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+rho = 0.005;
+
 C0 = Polyhedron('A', [eye(4); -eye(4)], ...
-			   'b', [con.y_max; con.nu_max; con.psi_max; con.r_max; con.y_max; con.nu_max; con.psi_max; con.r_max]);
+			          'b', [con.y_max; con.nu_max; con.psi_max; con.r_max; ...
+                      con.y_max; con.nu_max; con.psi_max; con.r_max]);
 XUset = Polyhedron('H', [-K 1 con.df_max; K -1 con.df_max]);
 
-C = C0;
+rho_ball = Polyhedron('A', [eye(4); -eye(4)], 'b', rho*ones(8,1));
+
+% Initialize
+C = Polyhedron('H', [0 0 0 0 1]);
+Ct = C0;
 iter = 0;
 tic;
-while not (C <= multi_pre_diffu(C, A_vertices_discrete, ...
-                B_vertices_discrete, E_vertices_discrete, ...
-                [], XUset, D_max_vertices, 0.0))
-% while true
-  Cpre = multi_pre_diffu(C, A_vertices_discrete, B_vertices_discrete, ...
-                         E_vertices_discrete, [], XUset, D_max_vertices, 0.005);
+
+while not (C-rho_ball <= Ct)
+  C = Ct;
+
+  Cpre = pre_forall_exists(C, A_vert_d, B_vert_d, ...
+                           E_vert_d, [], XUset, D_max_vert, rho);
 
   if Cpre.isEmptySet
     disp('returned empty')
-    C = Cpre;
+    Ct = Cpre;
     break
   end
 
-  C = Polyhedron('A', [Cpre.A; C0.A], 'b', [Cpre.b; C0.b]);
-  C = myMinHRep(C);
+  Ct = Polyhedron('A', [Cpre.A; C0.A], 'b', [Cpre.b; C0.b]);
+  Ct = myMinHRep(Ct);
 
-  cc = C.chebyCenter;
+  cc = Ct.chebyCenter;
   time = toc;
 
   iter = iter+1;
@@ -118,7 +125,14 @@ while not (C <= multi_pre_diffu(C, A_vertices_discrete, ...
         ' ineqs, ball ', num2str(cc.r), ', time ', num2str(time)])
 end
 
-poly_A = C.A;
-poly_b = C.b;
+% Check
+Ctt = pre_forall_exists(C, A_vert_d, B_vert_d, ...
+                        E_vert_d, [], XUset, D_max_vert, 0.);
+
+assert(Ct <= Ctt)
+
+
+poly_A = Ct.A;
+poly_b = Ct.b;
 
 save('lk_pcis_controller', 'poly_A', 'poly_b', 'con')
