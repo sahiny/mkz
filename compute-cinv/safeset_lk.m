@@ -129,8 +129,7 @@ end
 Ctt = pre_forall_exists(C, A_vert_d, B_vert_d, ...
                         E_vert_d, [], XUset, D_max_vert, 0.);
 
-assert(Ct <= Ctt)
-
+assert(Ct < Ctt);    % if no error Ct is controlled invariant
 
 poly_A = Ct.A;
 poly_b = Ct.b;
