@@ -125,13 +125,16 @@ while not (C-rho_ball <= Ct)
         ' ineqs, ball ', num2str(cc.r), ', time ', num2str(time)])
 end
 
-% Check
-Ctt = pre_forall_exists(C, A_vert_d, B_vert_d, ...
-                        E_vert_d, [], XUset, D_max_vert, 0.);
+if ~isEmptySet(Ct)
+  disp('finished computing, checking control invariance...')
+  % Check
+  Ctt = pre_forall_exists(C, A_vert_d, B_vert_d, ...
+                          E_vert_d, [], XUset, D_max_vert, 0.);
 
-assert(Ct < Ctt);    % if no error Ct is controlled invariant
+  assert(Ct < Ctt);    % if no error Ct is controlled invariant
 
-poly_A = Ct.A;
-poly_b = Ct.b;
+  poly_A = Ct.A;
+  poly_b = Ct.b;
 
-save('lk_pcis_controller', 'poly_A', 'poly_b', 'con')
+  save('lk_pcis_controller', 'poly_A', 'poly_b', 'con')
+end
