@@ -20,7 +20,6 @@ function polysync_controller()
 
 	% Control loop
 	while true
-
 		% Read data
 		[~, msg] = motion_subscriber.step();
 		rawdata = MotionMessage_to_rawdata(msg);
