@@ -49,14 +49,12 @@
       %  - Caf: cornering stiffness front tires [N/rad]
       %  - Iz: yaw moment of inertia [kg m^2]
 
-      setProperties(obj,nargin,varargin{:});
-
     end
   end
 
   methods(Access = protected)
     function setupImpl(obj)
-      data_temp = load('acc_pcis_controller', 'poly_A', 'poly_b', 'con');
+      data_temp = coder.load('acc_pcis_controller', 'poly_A', 'poly_b', 'con');
       obj.data = data_temp;
 
       A_acc_ct = [obj.f1bar/obj.M 0; -1 0];

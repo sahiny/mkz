@@ -9,9 +9,9 @@
     Car = 120000;
     Iz = 3270;
 
-    H_x = diag(4);
-    f_x = zeros(4);
-    H_u = 1;
+    H_x = diag([1 0 0.5 0]);
+    f_x = zeros(4,1);
+    H_u = 0.25;
     f_u = 0;
 
     sol_opts = struct('DataType', 'double', 'MaxIter', 200, ...
@@ -49,8 +49,6 @@
       %  - Caf: cornering stiffness front tires [N/rad]
       %  - Iz: yaw moment of inertia [kg m^2]
 
-      setProperties(obj,nargin,varargin{:});
-
     end
   end
 
@@ -58,7 +56,7 @@
     function setupImpl(obj)
       obj.B_lk = [0; obj.Caf/obj.M; 0; obj.lf*obj.Caf/obj.Iz];
       obj.E_lk = [0; 0; -1; 0];
-      data_temp = load('lk_pcis_controller');
+      data_temp = coder.load('lk_pcis_controller');
       obj.data = data_temp;
       
       obj.delta_f = 0;
@@ -149,23 +147,38 @@
       A_x = obj.data.poly_A;
       b_x = obj.data.poly_b;
 
-      H = B'*R_x*B + R_u;
-      f = r_u + B'*R_x*(A*x_lk + K) + B'*R_x*E*r_d + B'*r_x;
-      A_constr = [A_x*B; A_x*B; 1; -1];
-      b_constr = [b_x - A_x*A*x_lk - A_x*E*obj.data.con.rd_max; 
-                b_x - A_x*A*x_lk - A_x*E*(-obj.data.con.rd_max);
-                obj.data.con.df_max;
-                obj.data.con.df_max];
+      m = size(A_x,1);
+      
+      H = zeros(1,1);
+      f = zeros(1,1);
+      
+      H(1,1) = B'*R_x*B + R_u;
+      f(1,1) = r_u + B'*R_x*(A*x_lk + K) + B'*R_x*E*r_d + B'*r_x;
+      
+      A_constr = zeros(2*m+2,1);
+      b_constr = zeros(2*m+2,1);
+      
+      A_constr(1:m,:) = A_x*B;
+      A_constr(m+1:2*m,:) = A_x*B;
+      
+      A_constr(2*m+1:2*m+2,:) = [1;-1];
+    
+      b_constr(1:m,:)     = b_x -A_x*A*x_lk - A_x*E*( obj.data.con.rd_max);
+      b_constr(m+1:2*m,:) = b_x -A_x*A*x_lk - A_x*E*(-obj.data.con.rd_max);
+
+      b_constr(2*m+1:2*m+2,:) = [obj.data.con.df_max;
+                                 obj.data.con.df_max];
 
       % Objective 0.5 x' H x + f' x
-      % 
       L = chol(H, 'lower');
-      Linv = L\eye(size(H,1));
-  
+      Linv = zeros(1,1);
+      Linv(1,1) = L\eye(size(H,1));
+      
       [u, status] = mpcqpsolver(Linv, f, -A_constr, -b_constr, ...
                       [], zeros(0,1), ...
                       false(size(A_constr,1),1), obj.sol_opts);
-      
+      u = 0;
+      status = 1;
       % normalized distance from Polyhedron edge
       scale_vec = [obj.data.con.y_max obj.data.con.nu_max ...
                    obj.data.con.psi_max obj.data.con.r_max];
