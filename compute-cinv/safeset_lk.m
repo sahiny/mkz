@@ -119,7 +119,7 @@ while not (C-rho_ball <= Ct)
   time = toc;
 
   iter = iter+1;
-  disp(['iteration ', num2str(iter), ', ', num2str(size(C.A,1)), ...
+  disp(['iteration ', num2str(iter), ', ', num2str(size(Ct.A,1)), ...
         ' ineqs, ball ', num2str(cc.r), ', time ', num2str(time)])
 end
 

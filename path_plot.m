@@ -2,7 +2,7 @@ refSphere = wgs84Ellipsoid;
 
 r = road;
 r.pathfile = 'mcity/fixed_path.ascii';
-r.setup(0);
+r.setup(Simulink.Bus.createMATLABStruct('DataBus'));
 
 s_vec = 0:0.5:2000;
 
@@ -17,7 +17,6 @@ drc = cell2mat(drc)';
 kappa = cell2mat(kappa);
 
 tt = 0.0001*[-drc(:,2) drc(:,1)]./sqrt(sum(drc.*drc, 2));
-                  
 
 [lat, long, h] = enu2geodetic(rc(1,:), rc(2,:), 0, r.lat0, r.long0, r.h0, wgs84Ellipsoid);
 

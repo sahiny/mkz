@@ -32,7 +32,20 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
             obj.size_path = size(obj.path_,1);
             obj.len_path = obj.path_(end,3);
         end
+         % Error handling for input values
+        function validateInputsImpl(~,in)
+           if  ~isstruct(in)
+                  error(message('simdemos:MLSysBlockMsg:BusInput'));
+           end
+
+           if (~(isfield(in,'lat') && isfield(in,'long')))
+                error(message('simdemos:MLSysBlockMsg:InputBusElements'));
+           end
+        end
         % inputs
+        function num = getNumInputsImpl(obj)
+            num = 1;
+        end
         function out = getInputNamesImpl(obj)
             out = 'data';
         end
@@ -41,13 +54,13 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
             out = 1;
         end
         function out = getOutputDataTypeImpl(obj)
-            out = 'RoadBus';
+            out = 'LKACCBus';
         end
         function out = getOutputSizeImpl(obj)
             out = 1;
         end
         function out = getOutputNamesImpl(obj)
-            out = 'road_state';
+            out = 'lk_acc_state';
         end
         function [c1] = isOutputComplexImpl(obj)
             c1 = false;
@@ -56,7 +69,7 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
             f1 = true;
         end
         
-        function [road_state] = stepImpl(obj, data)
+        function [lk_acc_state] = stepImpl(obj, data)
             % Return global coordinate of vehicle
             veh_pos = get_vehicle_pos(obj, data.lat, data.long, 0);
             
@@ -77,6 +90,38 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
             road_state.d_road_y = drc(2);
             
             road_state.kappa = kappa;
+
+
+            %%%% Transformations to ACC/LK state %%%%%
+            % unit vector direction of road
+            road_unit = [road_state.d_road_x; road_state.d_road_y]/...
+                        norm([road_state.d_road_x; road_state.d_road_y]);
+
+            % relative position
+            rel_pos = [road_state.car_x - road_state.road_x;
+                       road_state.car_y - road_state.road_y];
+            
+            % velocity in global frame
+            global_vel = [data.Vx*cos(data.Yaw)-data.Vy*sin(data.Yaw);
+                          data.Vx*sin(data.Yaw)+data.Vy*cos(data.Yaw)];
+            
+            % yaw angles
+            normDeg = @(x) pi-mod(pi-x, 2*pi);
+            
+            road_yaw = cart2pol(road_unit(1), road_unit(2));
+            global_yaw = normDeg(normDeg(data.Yaw) + cart2pol(data.Vx, data.Vy));
+            
+            dPsi = normDeg(global_yaw - road_yaw);
+            
+            % assign
+            lk_acc_state.y = det([road_unit rel_pos]);
+            lk_acc_state.dy = det([road_unit global_vel]);
+            lk_acc_state.mu = data.Vx;
+            lk_acc_state.nu = data.Vy;
+            lk_acc_state.dPsi = dPsi;
+            lk_acc_state.r = data.YawRate;
+            lk_acc_state.h = 8;
+            lk_acc_state.r_d = road_state.kappa * norm(global_vel);
         end
     end
     methods
@@ -186,5 +231,5 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
 end
 
 function [idx] = min_idx(v)
-[~, idx] = min(sum(v.^2, 2), [], 1);
+    [~, idx] = min(sum(v.^2, 2), [], 1);
 end
