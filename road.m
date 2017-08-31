@@ -19,14 +19,12 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
     
     methods
         function obj = road(varargin)
-            % Road dynamics from coordinate list
-            setProperties(obj,nargin,varargin{:});
         end
     end
     
     methods(Access = protected)
         function setupImpl(obj)
-            tt = load(obj.pathfile);
+            tt = coder.load(obj.pathfile);
             obj.path_ = tt;
             
             obj.size_path = size(obj.path_,1);
