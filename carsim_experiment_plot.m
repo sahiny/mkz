@@ -15,8 +15,8 @@ plot(lk_acc_state.y.Time, lk_acc_state.y.Data)
 if val
     plot(data_lk_validate.Time, data_lk_validate.Data(:,1), '--g')
 end
-plot(xlim, [L_lk.con.y_max L_lk.con.y_max], '--')
-plot(xlim, [-L_lk.con.y_max -L_lk.con.y_max], '--')
+plot(xlim, [L_lk.con.y_max L_lk.con.y_max], '--g')
+plot(xlim, [-L_lk.con.y_max -L_lk.con.y_max], '--g')
 ylim([-1.1*L_lk.con.y_max, 1.1*L_lk.con.y_max]);
 ylabel('y')
 
@@ -51,23 +51,23 @@ figure(2); clf
 subplot(311)
 hold on 
 plot(lk_acc_state.mu.Time, lk_acc_state.mu.Data(:))
-plot(xlim, [L_acc.con.u_max L_acc.con.u_max], '--')
-plot(xlim, [L_acc.con.u_min L_acc.con.u_min], '--')
+plot(xlim, [L_acc.con.u_max L_acc.con.u_max], '--g')
+plot(xlim, [L_acc.con.u_min L_acc.con.u_min], '--g')
 ylabel('mu')
 ylim([0, 3*L_acc.con.u_max])
 
 subplot(312)
 hold on
 plot(F_w.Time, F_w.Data(:))
-plot(xlim, [1.1*L_acc.con.Fw_max 1.1*L_acc.con.Fw_max], '--')
-plot(xlim, [1.1*L_acc.con.Fw_min 1.1*L_acc.con.Fw_min], '--')
+plot(xlim, [1.1*L_acc.con.Fw_max 1.1*L_acc.con.Fw_max], '--g')
+plot(xlim, [1.1*L_acc.con.Fw_min 1.1*L_acc.con.Fw_min], '--g')
 ylabel('F_w')
 
 subplot(313)
 hold on
 plot(lk_acc_state.r_d.Time, lk_acc_state.r_d.Data(:))
-plot(xlim, [L_lk.con.rd_max L_lk.con.rd_max], '--')
-plot(xlim, [-L_lk.con.rd_max -L_lk.con.rd_max], '--')
+plot(xlim, [L_lk.con.rd_max L_lk.con.rd_max], '--g')
+plot(xlim, [-L_lk.con.rd_max -L_lk.con.rd_max], '--g')
 ylim([-2.5*L_lk.con.rd_max, 2.5*L_lk.con.rd_max])
 ylabel('r_d')
 
@@ -78,8 +78,8 @@ hold on
 plot(delta_f.Time, delta_f.Data(:), 'k--')
 plot(rawdata.steer_L1.Time, rawdata.steer_L1.Data, 'b')
 plot(rawdata.steer_R1.Time, rawdata.steer_R1.Data, 'r')
-plot(xlim, [L_lk.con.df_max L_lk.con.df_max], '--')
-plot(xlim, [-L_lk.con.df_max -L_lk.con.df_max], '--')
+plot(xlim, [L_lk.con.df_max L_lk.con.df_max], '--g')
+plot(xlim, [-L_lk.con.df_max -L_lk.con.df_max], '--g')
 ylim([-1.1*L_lk.con.df_max, 1.1*L_lk.con.df_max])
 ylabel('\delta_f')
 
@@ -94,8 +94,8 @@ subplot(413)
 hold on
 plot(rawdata.Fx.Time, rawdata.Fx.Data)
 plot(F_w.Time, F_w.Data(:), 'k--')
-plot(xlim, [L_acc.con.Fw_max L_acc.con.Fw_max], '--')
-plot(xlim, [L_acc.con.Fw_min L_acc.con.Fw_min], '--')
+plot(xlim, [L_acc.con.Fw_max L_acc.con.Fw_max], '--g')
+plot(xlim, [L_acc.con.Fw_min L_acc.con.Fw_min], '--g')
 ylim([1.1*L_acc.con.Fw_min, 1.1*L_acc.con.Fw_max])
 ylabel('F_w')
 
