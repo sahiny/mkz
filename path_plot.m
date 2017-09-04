@@ -1,10 +1,10 @@
 refSphere = wgs84Ellipsoid;
 
 r = road;
-r.pathfile = 'mcity/fixed_path.ascii';
+r.pathfile = 'mcity/mcity_outer.ascii';
 r.setup(Simulink.Bus.createMATLABStruct('DataBus'));
 
-s_vec = 0:0.5:2000;
+s_vec = 0:0.5:1200;
 
 [s_cell, xs_cell, ys_cell] = arrayfun(@(s) r.get_pos(s), s_vec, ...
 									  'UniformOutput', false);

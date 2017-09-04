@@ -177,8 +177,7 @@
       [u, status] = mpcqpsolver(Linv, f, -A_constr, -b_constr, ...
                       [], zeros(0,1), ...
                       false(size(A_constr,1),1), obj.sol_opts);
-      u = 0;
-      status = 1;
+
       % normalized distance from Polyhedron edge
       scale_vec = [obj.data.con.y_max obj.data.con.nu_max ...
                    obj.data.con.psi_max obj.data.con.r_max];

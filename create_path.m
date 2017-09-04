@@ -1,19 +1,14 @@
 % Read long/lat from data file and save evenly spaced local waypoints
 clear all;
 
-data = load('data/simulation_data.mat')
-lat = data.data.lat.Data;
-long = data.data.long.Data;
+data = load('data/2017-09-01-09-38-48.txt')
+lat = data(:,16);
+long = data(:,17);
 h = 0;
 
-% data = load('data/4_1_RTK_PlatformMotion.mat');
-% lat = rad2deg(data.RTK.latitude);
-% long = rad2deg(data.RTK.longitude);
-% alt = rad2deg(data.RTK.altitude);
+save_file = 'mcity/recorded_path.ascii';	% file for saving path
 
-save_file = 'mcity/simulation_path.ascii';	% file for saving path
-
-nom_dist = 1;   % distance between waypoints [m]
+nom_dist = 1.5;   % distance between waypoints [m]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -5,12 +5,13 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
         long0 = -83.69758056;   % local center longitude
         h0 = 0;                 % local center altitude
         pathfile = 'mcity/fixed_path.ascii';    % path in local (xE, yN)
+        circular = 0;
         
         N_path = 3;             % number of points in each direction to fit
         N_interp = 10;          % number of subdivisions to find closes point
         dt = 0.1;               % time step for computing derivatives
     end
-    
+
     properties(Access = protected)
         path_;
         size_path;
@@ -186,19 +187,17 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
         end
         
         function [s, x_spline, y_spline] = get_pos(obj, s)
-            % return point at distance s along path
+            % return point at distance s along path            
+            [~, idx] = sort(abs(obj.path_(:,3) - s));
+            s0 = obj.path_(idx(1),3);
+            x0 = obj.path_(idx(1),1:2);
             
-            s = mod(s, obj.len_path);
-            
-            [~, pt_idx_min] = min(abs(obj.path_(:,3) - s), [], 1);
-            interp_ival = 1 + mod((pt_idx_min-obj.N_path:pt_idx_min+obj.N_path) - 1, ...
-                obj.size_path-1);
-            s_interp = obj.path_(interp_ival, 3);
-            s = s - obj.len_path*(s > s_interp(end));
-            s_interp = s_interp - obj.len_path.*(s_interp > s_interp(end));
-            
-            x_spline = spline(s_interp, obj.path_(interp_ival, 1));
-            y_spline = spline(s_interp, obj.path_(interp_ival, 2));
+            s1 = obj.path_(idx(2),3);
+            x1 = obj.path_(idx(2),1:2);
+
+            x = x0 * (s-s0)/(s1-s0) + x1 * (s1-s)/(s1-s0);
+
+            [s, x_spline, y_spline] = obj.get_poly(x');
         end
         
         function [s, x_spline, y_spline] = get_poly(obj, veh_pos)
@@ -209,15 +208,33 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
             interp_ival = 1 + mod((pt_idx_min-obj.N_path:pt_idx_min+obj.N_path) - 1, ...
                 obj.size_path-1);
             
-            % fit polynomial along path
-            s_interp = obj.path_(interp_ival, 3);
-            s_interp = s_interp - obj.len_path.*(s_interp > s_interp(end));
-            s_interp = s_interp - s_interp(obj.N_path+1);
+            if obj.circular
+                % Path is a loop
+                ival_mid = obj.N_path+1;
+
+                interp_ival = 1 + mod((pt_idx_min-obj.N_path:pt_idx_min+obj.N_path) - 1, ...
+                    obj.size_path-1);
+
+                s_interp = obj.path_(interp_ival, 3);
+                s = s - obj.len_path*(s > s_interp(end));
+                s_interp = s_interp - obj.len_path.*(s_interp > s_interp(end));
+            else
+                % Path is not loop
+                ival_sta = max(1, pt_idx_min-obj.N_path);
+                ival_end = min(obj.size_path, pt_idx_min+obj.N_path);
+                ival_mid = pt_idx_min-ival_sta;   
+
+                interp_ival = ival_sta:ival_end; % points to interpolate
+
+                s_interp = obj.path_(interp_ival, 3);
+                s_interp = s_interp - obj.path_(pt_idx_min, 3);
+            end
+
             x_spline = spline(s_interp, obj.path_(interp_ival, 1));
             y_spline = spline(s_interp, obj.path_(interp_ival, 2));
             
             % find closest point along interpolated curve
-            interp_pts = linspace(s_interp(obj.N_path), s_interp(obj.N_path+2), obj.N_interp);
+            interp_pts = linspace(s_interp(max(1,ival_mid-1)), s_interp(min(length(s_interp), ival_mid+1)), obj.N_interp);
             traj_pts = [ppval(x_spline, interp_pts)' ppval(y_spline, interp_pts)'];
             s_idx_min = min_idx(traj_pts - repmat(veh_pos', obj.N_interp, 1));
             

@@ -1,4 +1,4 @@
-veh_path = load('C:/MKZ/mcity/fixed_path.ascii');
+veh_path = load('C:/MKZ/mcity/mcity_outer.ascii');
 
 end_time = length(lk_acc_state.y.Time)-1;
 
