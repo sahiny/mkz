@@ -56,7 +56,7 @@
     function setupImpl(obj)
       obj.B_lk = [0; obj.Caf/obj.M; 0; obj.lf*obj.Caf/obj.Iz];
       obj.E_lk = [0; 0; -1; 0];
-      data_temp = coder.load('lk_pcis_controller');
+      data_temp = coder.load('lk_pcis_controller.mat');
       obj.data = data_temp;
       
       obj.delta_f = 0;
