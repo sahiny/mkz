@@ -58,9 +58,11 @@ ylim([0, 3*L_acc.con.u_max])
 
 subplot(312)
 hold on
-plot(F_w.Time, F_w.Data(:))
-plot(xlim, [1.1*L_acc.con.Fw_max 1.1*L_acc.con.Fw_max], '--g')
-plot(xlim, [1.1*L_acc.con.Fw_min 1.1*L_acc.con.Fw_min], '--g')
+plot(rawdata.Fx.Time, rawdata.Fx.Data)
+plot(F_w.Time, F_w.Data(:), 'k--')
+plot(xlim, [L_acc.con.Fw_max L_acc.con.Fw_max], '--g')
+plot(xlim, [L_acc.con.Fw_min L_acc.con.Fw_min], '--g')
+ylim([1.1*L_acc.con.Fw_min, 1.1*L_acc.con.Fw_max])
 ylabel('F_w')
 
 subplot(313)
@@ -73,7 +75,7 @@ ylabel('r_d')
 
 figure(3)
 clf; hold on;
-subplot(411)
+subplot(311)
 hold on
 plot(delta_f.Time, delta_f.Data(:), 'k--')
 plot(rawdata.steer_L1.Time, rawdata.steer_L1.Data, 'b')
@@ -83,23 +85,14 @@ plot(xlim, [-L_lk.con.df_max -L_lk.con.df_max], '--g')
 ylim([-1.1*L_lk.con.df_max, 1.1*L_lk.con.df_max])
 ylabel('\delta_f')
 
-subplot(412)
+subplot(312)
 hold on
 plot(lk_control_info.barrier_val.Time, lk_control_info.barrier_val.Data)
 ylim([-0.1, 1.1*max(lk_control_info.barrier_val.Data)])
 plot(xlim, [0 0], '--')
 ylabel('poly_dist')
 
-subplot(413)
-hold on
-plot(rawdata.Fx.Time, rawdata.Fx.Data)
-plot(F_w.Time, F_w.Data(:), 'k--')
-plot(xlim, [L_acc.con.Fw_max L_acc.con.Fw_max], '--g')
-plot(xlim, [L_acc.con.Fw_min L_acc.con.Fw_min], '--g')
-ylim([1.1*L_acc.con.Fw_min, 1.1*L_acc.con.Fw_max])
-ylabel('F_w')
-
-subplot(414)
+subplot(313)
 hold on
 plot(acc_control_info.barrier_val.Time, acc_control_info.barrier_val.Data)
 ylim([-0.1, 1.1*max(acc_control_info.barrier_val.Data)])

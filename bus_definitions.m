@@ -268,6 +268,175 @@ elems(18).Max = [];
 elems(18).DocUnits = sprintf('N');
 elems(18).Description = sprintf('longitudinal force');
 
+elems(19) = Simulink.BusElement;
+elems(19).Name = 'Gear_CL';
+elems(19).Dimensions = 1;
+elems(19).DimensionsMode = 'Fixed';
+elems(19).DataType = 'double';
+elems(19).SampleTime = -1;
+elems(19).Complexity = 'real';
+elems(19).Min = [];
+elems(19).Max = [];
+elems(19).DocUnits = sprintf('');
+elems(19).Description = sprintf('Gear');
+
+elems(20) = Simulink.BusElement;
+elems(20).Name = 'RGear_Tr';
+elems(20).Dimensions = 1;
+elems(20).DimensionsMode = 'Fixed';
+elems(20).DataType = 'double';
+elems(20).SampleTime = -1;
+elems(20).Complexity = 'real';
+elems(20).Min = [];
+elems(20).Max = [];
+elems(20).DocUnits = sprintf('');
+elems(20).Description = sprintf('Gear ratio');
+
+
+elems(21) = Simulink.BusElement;
+elems(21).Name = 'AV_Eng';
+elems(21).Dimensions = 1;
+elems(21).DimensionsMode = 'Fixed';
+elems(21).DataType = 'double';
+elems(21).SampleTime = -1;
+elems(21).Complexity = 'real';
+elems(21).Min = [];
+elems(21).Max = [];
+elems(21).DocUnits = sprintf('rpm');
+elems(21).Description = sprintf('Engine crankshaft spin');
+
+elems(22) = Simulink.BusElement;
+elems(22).Name = 'Throttle';
+elems(22).Dimensions = 1;
+elems(22).DimensionsMode = 'Fixed';
+elems(22).DataType = 'double';
+elems(22).SampleTime = -1;
+elems(22).Complexity = 'real';
+elems(22).Min = [];
+elems(22).Max = [];
+elems(22).DocUnits = sprintf('');
+elems(22).Description = sprintf('Normalized throttle at pedal');
+
+elems(23) = Simulink.BusElement;
+elems(23).Name = 'Throttle_Eng';
+elems(23).Dimensions = 1;
+elems(23).DimensionsMode = 'Fixed';
+elems(23).DataType = 'double';
+elems(23).SampleTime = -1;
+elems(23).Complexity = 'real';
+elems(23).Min = [];
+elems(23).Max = [];
+elems(23).DocUnits = sprintf('');
+elems(23).Description = sprintf('Normalized throttle at engine');
+
+elems(24) = Simulink.BusElement;
+elems(24).Name = 'M_EngOut';
+elems(24).Dimensions = 1;
+elems(24).DimensionsMode = 'Fixed';
+elems(24).DataType = 'double';
+elems(24).SampleTime = -1;
+elems(24).Complexity = 'real';
+elems(24).Min = [];
+elems(24).Max = [];
+elems(24).DocUnits = sprintf('');
+elems(24).Description = sprintf('Engine output torque');
+
+elems(25) = Simulink.BusElement;
+elems(25).Name = 'AVy_L1';
+elems(25).Dimensions = 1;
+elems(25).DimensionsMode = 'Fixed';
+elems(25).DataType = 'double';
+elems(25).SampleTime = -1;
+elems(25).Complexity = 'real';
+elems(25).Min = [];
+elems(25).Max = [];
+elems(25).DocUnits = sprintf('rpm');
+elems(25).Description = sprintf('Wheel rpm');
+
+elems(26) = Simulink.BusElement;
+elems(26).Name = 'AVy_L2';
+elems(26).Dimensions = 1;
+elems(26).DimensionsMode = 'Fixed';
+elems(26).DataType = 'double';
+elems(26).SampleTime = -1;
+elems(26).Complexity = 'real';
+elems(26).Min = [];
+elems(26).Max = [];
+elems(26).DocUnits = sprintf('rpm');
+elems(26).Description = sprintf('Wheel rpm');
+
+elems(27) = Simulink.BusElement;
+elems(27).Name = 'AVy_R1';
+elems(27).Dimensions = 1;
+elems(27).DimensionsMode = 'Fixed';
+elems(27).DataType = 'double';
+elems(27).SampleTime = -1;
+elems(27).Complexity = 'real';
+elems(27).Min = [];
+elems(27).Max = [];
+elems(27).DocUnits = sprintf('rpm');
+elems(27).Description = sprintf('Wheel rpm');
+
+elems(28) = Simulink.BusElement;
+elems(28).Name = 'AVy_R2';
+elems(28).Dimensions = 1;
+elems(28).DimensionsMode = 'Fixed';
+elems(28).DataType = 'double';
+elems(28).SampleTime = -1;
+elems(28).Complexity = 'real';
+elems(28).Min = [];
+elems(28).Max = [];
+elems(28).DocUnits = sprintf('rpm');
+elems(28).Description = sprintf('Wheel rpm');
+
+elems(29) = Simulink.BusElement;
+elems(29).Name = 'My_Dr_L1';
+elems(29).Dimensions = 1;
+elems(29).DimensionsMode = 'Fixed';
+elems(29).DataType = 'double';
+elems(29).SampleTime = -1;
+elems(29).Complexity = 'real';
+elems(29).Min = [];
+elems(29).Max = [];
+elems(29).DocUnits = sprintf('Nm');
+elems(29).Description = sprintf('Wheel drive moment');
+
+elems(30) = Simulink.BusElement;
+elems(30).Name = 'My_Dr_L2';
+elems(30).Dimensions = 1;
+elems(30).DimensionsMode = 'Fixed';
+elems(30).DataType = 'double';
+elems(30).SampleTime = -1;
+elems(30).Complexity = 'real';
+elems(30).Min = [];
+elems(30).Max = [];
+elems(30).DocUnits = sprintf('Nm');
+elems(30).Description = sprintf('Wheel drive moment');
+
+elems(31) = Simulink.BusElement;
+elems(31).Name = 'My_Dr_R1';
+elems(31).Dimensions = 1;
+elems(31).DimensionsMode = 'Fixed';
+elems(31).DataType = 'double';
+elems(31).SampleTime = -1;
+elems(31).Complexity = 'real';
+elems(31).Min = [];
+elems(31).Max = [];
+elems(31).DocUnits = sprintf('Nm');
+elems(31).Description = sprintf('Wheel drive moment');
+
+elems(32) = Simulink.BusElement;
+elems(32).Name = 'My_Dr_R2';
+elems(32).Dimensions = 1;
+elems(32).DimensionsMode = 'Fixed';
+elems(32).DataType = 'double';
+elems(32).SampleTime = -1;
+elems(32).Complexity = 'real';
+elems(32).Min = [];
+elems(32).Max = [];
+elems(32).DocUnits = sprintf('Nm');
+elems(32).Description = sprintf('Wheel drive moment');
+
 
 DataBus = Simulink.Bus;
 DataBus.HeaderFile = '';

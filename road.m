@@ -68,7 +68,7 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
             f1 = true;
         end
         
-        function [lk_acc_state] = stepImpl(obj, data)
+        function [lk_acc_state, road_left] = stepImpl(obj, data)
             % Return global coordinate of vehicle
             veh_pos = get_vehicle_pos(obj, data.lat, data.long, 0);
             
@@ -121,6 +121,8 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
             lk_acc_state.r = data.YawRate;
             lk_acc_state.h = 8;
             lk_acc_state.r_d = road_state.kappa * norm(global_vel);
+            
+            road_left = obj.len_path - s;
         end
     end
     methods
