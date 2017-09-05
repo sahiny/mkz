@@ -7,10 +7,14 @@
     f1bar = 40.59;
     vl = 26/3.6;
 
+    v_des = 28/3.6;
+
     H_x = diag([1 0.01]);
     f_x = [-28/3.6; 0];
     H_u = 1;
     f_u = 0;
+
+    K_i = 1;    % integral gain
 
     sol_opts = struct('DataType', 'double', 'MaxIter', 200, ...
                       'FeasibilityTol', 1e-6, 'IntegrityChecks', true);
@@ -25,8 +29,10 @@
   end
   
   properties(DiscreteState)
-    F_w;
-    barrier_val;
+    v_err;    % integrated error
+
+    F_w;          % control to apply
+    barrier_val;  % distance from safe set boundary
   end
 
   methods
@@ -56,6 +62,8 @@
     function setupImpl(obj)
       data_temp = coder.load('acc_pcis_controller.mat', 'poly_A', 'poly_b', 'con');
       obj.data = data_temp;
+
+      obj.v_err = 0;
 
       A_acc_ct = [obj.f1bar/obj.M 0; -1 0];
       B_acc_ct = [1/obj.M; 0];
@@ -88,10 +96,11 @@
 
     % inputs
     function out = getNumInputsImpl(obj)
-      out = 1;
+      out = 2;
     end
-    function [o1] = getInputNamesImpl(obj)
+    function [o1, o2] = getInputNamesImpl(obj)
       o1 = 'lk_acc_state';
+      o2 = 'dt';
     end
     % outputs
     function out = getNumOutputsImpl(obj)
@@ -118,8 +127,10 @@
        c2 = false;
     end
     % update
-    function updateImpl(obj, state, r_d)
+    function updateImpl(obj, state, dt)
       x_acc = [state.mu; state.h];
+
+      u_I = obj.K_i * obj.v_err;
 
       d_lk = state.nu * state.r;
        
@@ -142,10 +153,10 @@
       H = B'*R_x*B + R_u;
       f = r_u + B'*R_x*(A*x_acc + K) + B'*r_x;
       A_constr = [A_x*B; A_x*B; 1; -1];
-      b_constr = [b_x - A_x*A*x_acc - A_x*K; 
-                b_x - A_x*A*x_acc - A_x*K;
-                obj.data.con.Fw_max;
-                -obj.data.con.Fw_min];
+      b_constr = [b_x - A_x*A*x_acc - A_x*K - A_x*B*u_I; 
+                b_x - A_x*A*x_acc - A_x*K - A_x*B*u_I;
+                obj.data.con.Fw_max - u_I;
+                -obj.data.con.Fw_min + u_I];
 
       % Objective 0.5 x' H x + f' x
       % 
@@ -165,7 +176,13 @@
                   
       if status > 0
         % qp solved successfully
-        obj.F_w = u;
+        obj.F_w = u + obj.K_i * obj.v_err;
+
+        obj.v_err = obj.v_err + dt * (obj.v_des - state.mu);
+
+        % Prevent excessive wind-up
+        obj.v_err = min(obj.v_err, 1000/obj.K_i);
+        obj.v_err = max(obj.v_err, -1000/obj.K_i);
       else
         % infeasible: accelerate fixed
         obj.F_w = 500;
@@ -176,12 +193,13 @@
     function [F_w, control_info] = outputImpl(obj, ~, ~)
         F_w = obj.F_w;
         control_info.barrier_val = obj.barrier_val;
-        control_info.ddy = 0;
+        control_info.ddy = obj.v_err;
         control_info.qp_status = 0;
     end
     
-    function [f1] = isInputDirectFeedthroughImpl(obj, ~)
+    function [f1, f2] = isInputDirectFeedthroughImpl(obj, ~, ~)
         f1 = false;
+        f2 = false;
     end
   end
 end

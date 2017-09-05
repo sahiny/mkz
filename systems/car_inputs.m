@@ -74,16 +74,16 @@ classdef car_inputs < matlab.System & matlab.system.mixin.Propagates
         function [steering_angle, throttle] = stepImpl(obj, delta_f, F_w, rawdata)
             avg_rpm = (rawdata.AVy_L1 + rawdata.AVy_L2 + ...
                        rawdata.AVy_R1 + rawdata.AVy_R2) / 4;
-            whl_torque = obj.wheel_rad * F_w
+            whl_torque = obj.wheel_rad * F_w;
 
-            eng_rpm = rawdata.AV_Eng
+            eng_rpm = rawdata.AV_Eng;
 
-            eng_torque = whl_torque * avg_rpm / eng_rpm / obj.trans_eff
+            eng_torque = whl_torque * avg_rpm / eng_rpm / obj.trans_eff;
 
             c_th = interp2(obj.eng_map_F, obj.eng_map_w, obj.eng_map_th, ...
-                               eng_torque,  eng_rpm)
+                               eng_torque,  eng_rpm);
 
-            c_sa = delta_f * obj.steer_ratio
+            c_sa = delta_f * obj.steer_ratio;
 
             % Sometimes get NaNs out from Carsim
             if ~ isnan(c_th)

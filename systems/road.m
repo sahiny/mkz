@@ -12,10 +12,10 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
         dt = 0.1;               % time step for computing derivatives
     end
 
-    properties(Access = protected)
+    properties(SetAccess = protected, GetAccess = public)
+        len_path;
         path_;
         size_path;
-        len_path;
     end
     
     methods

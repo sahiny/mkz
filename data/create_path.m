@@ -1,19 +1,19 @@
 % Read long/lat from data file and save evenly spaced local waypoints
-clear all;
-
-data = load('data/2017-09-01-09-38-48.txt')
+data = load('2017-09-01-09-38-48.txt');
 lat = data(:,16);
 long = data(:,17);
 h = 0;
 
-save_file = 'mcity/recorded_path.ascii';	% file for saving path
+save_file = 'recorded_path.ascii';	% file for saving path
 
-nom_dist = 1.5;   % distance between waypoints [m]
+nom_dist = 1;   % distance between waypoints [m]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 r = road;
+r.N_path = 3;
+r.N_interp = 10;
 
 % Local coordinates
 [xE, yN] = geodetic2enu(lat, long, 0, r.lat0, r.long0, r.h0, wgs84Ellipsoid);
@@ -38,4 +38,8 @@ while true
     curr = next;
 end
 
-dlmwrite(save_file, waypoints, 'delimiter', '\t', 'precision', '%.4f')
+dlmwrite(save_file, waypoints, 'delimiter', '\t', 'precision', '%.4f');
+
+r.pathfile = save_file;
+r.setup(Simulink.Bus.createMATLABStruct('DataBus'));
+path_plot(r);
