@@ -1,7 +1,5 @@
 veh_path = load('C:/MKZ/mcity/mcity_outer.ascii');
 
-end_time = length(lk_acc_state.y.Time)-1;
-
 L_lk = load('lk_pcis_controller.mat');
 L_acc = load('acc_pcis_controller.mat');
 
@@ -35,7 +33,7 @@ plot(lk_acc_state.dPsi.Time, lk_acc_state.dPsi.Data)
 if val
     plot(data_lk_validate.Time, data_lk_validate.Data(:,3), '--g')
 end
-ylim([-1.1*L_lk.con.psi_max 1.1*L_lk.con.psi_max]);
+% ylim([-1.1*L_lk.con.psi_max 1.1*L_lk.con.psi_max]);
 ylabel('\Delta \Psi')
 
 subplot(414)

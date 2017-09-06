@@ -14,7 +14,7 @@
     H_u = 1;
     f_u = 0;
 
-    K_i = 1;    % integral gain
+    K_i = 50;    % integral gain
 
     sol_opts = struct('DataType', 'double', 'MaxIter', 200, ...
                       'FeasibilityTol', 1e-6, 'IntegrityChecks', true);

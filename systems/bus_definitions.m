@@ -398,7 +398,7 @@ elems(29).SampleTime = -1;
 elems(29).Complexity = 'real';
 elems(29).Min = [];
 elems(29).Max = [];
-elems(29).DocUnits = sprintf('Nm');
+elems(29).DocUnits = sprintf('N*m');
 elems(29).Description = sprintf('Wheel drive moment');
 
 elems(30) = Simulink.BusElement;
@@ -410,7 +410,7 @@ elems(30).SampleTime = -1;
 elems(30).Complexity = 'real';
 elems(30).Min = [];
 elems(30).Max = [];
-elems(30).DocUnits = sprintf('Nm');
+elems(30).DocUnits = sprintf('N*m');
 elems(30).Description = sprintf('Wheel drive moment');
 
 elems(31) = Simulink.BusElement;
@@ -422,7 +422,7 @@ elems(31).SampleTime = -1;
 elems(31).Complexity = 'real';
 elems(31).Min = [];
 elems(31).Max = [];
-elems(31).DocUnits = sprintf('Nm');
+elems(31).DocUnits = sprintf('N*m');
 elems(31).Description = sprintf('Wheel drive moment');
 
 elems(32) = Simulink.BusElement;
@@ -434,8 +434,32 @@ elems(32).SampleTime = -1;
 elems(32).Complexity = 'real';
 elems(32).Min = [];
 elems(32).Max = [];
-elems(32).DocUnits = sprintf('Nm');
+elems(32).DocUnits = sprintf('N*m');
 elems(32).Description = sprintf('Wheel drive moment');
+
+elems(33) = Simulink.BusElement;
+elems(33).Name = 'F_pedal';
+elems(33).Dimensions = 1;
+elems(33).DimensionsMode = 'Fixed';
+elems(33).DataType = 'double';
+elems(33).SampleTime = -1;
+elems(33).Complexity = 'real';
+elems(33).Min = [];
+elems(33).Max = [];
+elems(33).DocUnits = sprintf('N');
+elems(33).Description = sprintf('Brake pedal force');
+
+elems(34) = Simulink.BusElement;
+elems(34).Name = 'Bk_pedal';
+elems(34).Dimensions = 1;
+elems(34).DimensionsMode = 'Fixed';
+elems(34).DataType = 'double';
+elems(34).SampleTime = -1;
+elems(34).Complexity = 'real';
+elems(34).Min = [];
+elems(34).Max = [];
+elems(34).DocUnits = sprintf('mm');
+elems(34).Description = sprintf('Brake pedal displacement');
 
 
 DataBus = Simulink.Bus;

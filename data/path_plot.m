@@ -3,12 +3,8 @@ function [] = path_plot(r)
 
 	s_vec = 0:0.5:r.len_path;
 
-	[s_cell, xs_cell, ys_cell] = arrayfun(@(s) r.get_pos(s), s_vec, ...
-										  'UniformOutput', false);
-
-	[rc, drc, kappa] = cellfun(@(s, xs, ys) r.get_road_state(s, xs, ys), ...
-						  s_cell, xs_cell, ys_cell, ...
-						  'UniformOutput', false);
+	[rc, drc, kappa] = arrayfun(@(s) r.get_pos(s), s_vec, ...
+						  		'UniformOutput', false);
 	rc = cell2mat(rc);
 	drc = cell2mat(drc)';
 	kappa = cell2mat(kappa);

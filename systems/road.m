@@ -50,22 +50,27 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
         end
         % outputs
         function out = getNumOutputsImpl(obj)
-            out = 1;
+            out = 2;
         end
-        function out = getOutputDataTypeImpl(obj)
-            out = 'LKACCBus';
+        function [o1, o2] = getOutputDataTypeImpl(obj)
+            o1 = 'LKACCBus';
+            o2 = 'double';
         end
-        function out = getOutputSizeImpl(obj)
-            out = 1;
+        function [o1, o2] = getOutputSizeImpl(obj)
+            o1 = 1;
+            o2 = 1;
         end
-        function out = getOutputNamesImpl(obj)
-            out = 'lk_acc_state';
+        function [o1, o2] = getOutputNamesImpl(obj)
+            o1 = 'lk_acc_state';
+            o2 = 'road_left';
         end
-        function [c1] = isOutputComplexImpl(obj)
+        function [c1, c2] = isOutputComplexImpl(obj)
             c1 = false;
+            c2 = false;
         end
-        function [f1] = isOutputFixedSizeImpl(obj)
+        function [f1, f2] = isOutputFixedSizeImpl(obj)
             f1 = true;
+            f2 = true;
         end
         
         function [lk_acc_state, road_left] = stepImpl(obj, data)
@@ -74,10 +79,8 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
             
             veh_pos = veh_pos - [data.x_CG*cos(data.Yaw) - data.y_CG*sin(data.Yaw);
                 data.x_CG*sin(data.Yaw) + data.y_CG*cos(data.Yaw)];
-            
-            [s, x_spline, y_spline] = get_poly(obj, veh_pos);
-            
-            [rc, drc, kappa] = get_road_state(obj, s, x_spline, y_spline);
+                        
+            [rc, drc, kappa, road_left] = get_road_state(obj, veh_pos);
             
             road_state.car_x = veh_pos(1);
             road_state.car_y = veh_pos(2);
@@ -121,8 +124,6 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
             lk_acc_state.r = data.YawRate;
             lk_acc_state.h = 8;
             lk_acc_state.r_d = road_state.kappa * norm(global_vel);
-            
-            road_left = obj.len_path - s;
         end
     end
     methods
@@ -166,13 +167,51 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
             veh_pos = [xEast; yNorth];
         end
         
-        function [rc, drc, kappa] = get_road_state(obj, s, x_spline, y_spline)
+        function [rc, drc, kappa, road_left] = get_road_state(obj, veh_pos)
             % get road states (rc: road center, drc: (d/dt) rc, kappa:
             % curvature)
+
+            % find closest point on path
+            pt_idx_min = min_idx( obj.path_(:, 1:2) - repmat(veh_pos', size(obj.path_,1), 1) );
+            interp_ival = 1 + mod((pt_idx_min-obj.N_path:pt_idx_min+obj.N_path) - 1, ...
+                obj.size_path-1);
             
+            if obj.circular
+                % Path is a loop
+                ival_mid = obj.N_path+1;
+
+                interp_ival = 1 + mod((pt_idx_min-obj.N_path:pt_idx_min+obj.N_path) - 1, ...
+                    obj.size_path-1);
+
+                s_interp = obj.path_(interp_ival, 3);
+                s_interp = s_interp - obj.len_path.*(s_interp > s_interp(end));
+            else
+                % Path is not loop
+                ival_sta = max(1, pt_idx_min-obj.N_path);
+                ival_end = min(obj.size_path, pt_idx_min+obj.N_path);
+                ival_mid = pt_idx_min-ival_sta;   
+
+                interp_ival = ival_sta:ival_end; % points to interpolate
+
+                s_interp = obj.path_(interp_ival, 3);
+            end
+
+            x_spline = spline(s_interp, obj.path_(interp_ival, 1));
+            y_spline = spline(s_interp, obj.path_(interp_ival, 2));
+            
+            % find closest point along interpolated curve
+            interp_pts = linspace(s_interp(max(1,ival_mid-1)), s_interp(min(length(s_interp), ival_mid+1)), obj.N_interp);
+            traj_pts = [ppval(x_spline, interp_pts)' ppval(y_spline, interp_pts)'];
+            s_idx_min = min_idx(traj_pts - repmat(veh_pos', obj.N_interp, 1));
+            
+            dfun = @(t) norm(veh_pos - [ppval(x_spline,t); ppval(y_spline, t)]);
+            s = fminsearch(dfun, interp_pts(s_idx_min));
+
+            road_left = obj.len_path - s;
+
             % position
             rc = [ppval(x_spline, s);
-                ppval(y_spline, s)];
+                 ppval(y_spline, s)];
             
             % 1st derivative of position
             drc = ([ppval(x_spline, s+obj.dt);
@@ -188,7 +227,7 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
             kappa = det([drc ddrc])/norm(drc)^3;
         end
         
-        function [s, x_spline, y_spline] = get_pos(obj, s)
+        function [rc, drc, kappa] = get_pos(obj, s)
             % return point at distance s along path            
             [~, idx] = sort(abs(obj.path_(:,3) - s));
             s0 = obj.path_(idx(1),3);
@@ -199,50 +238,7 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
 
             x = x0 * (s-s0)/(s1-s0) + x1 * (s1-s)/(s1-s0);
 
-            [s, x_spline, y_spline] = obj.get_poly(x');
-        end
-        
-        function [s, x_spline, y_spline] = get_poly(obj, veh_pos)
-            % fit splines through waypoints around veh_pos
-            
-            % find closest point on path
-            pt_idx_min = min_idx( obj.path_(:, 1:2) - repmat(veh_pos', size(obj.path_,1), 1) );
-            interp_ival = 1 + mod((pt_idx_min-obj.N_path:pt_idx_min+obj.N_path) - 1, ...
-                obj.size_path-1);
-            
-            if obj.circular
-                % Path is a loop
-                ival_mid = obj.N_path+1;
-
-                interp_ival = 1 + mod((pt_idx_min-obj.N_path:pt_idx_min+obj.N_path) - 1, ...
-                    obj.size_path-1);
-
-                s_interp = obj.path_(interp_ival, 3);
-                s = s - obj.len_path*(s > s_interp(end));
-                s_interp = s_interp - obj.len_path.*(s_interp > s_interp(end));
-            else
-                % Path is not loop
-                ival_sta = max(1, pt_idx_min-obj.N_path);
-                ival_end = min(obj.size_path, pt_idx_min+obj.N_path);
-                ival_mid = pt_idx_min-ival_sta;   
-
-                interp_ival = ival_sta:ival_end; % points to interpolate
-
-                s_interp = obj.path_(interp_ival, 3);
-                s_interp = s_interp - obj.path_(pt_idx_min, 3);
-            end
-
-            x_spline = spline(s_interp, obj.path_(interp_ival, 1));
-            y_spline = spline(s_interp, obj.path_(interp_ival, 2));
-            
-            % find closest point along interpolated curve
-            interp_pts = linspace(s_interp(max(1,ival_mid-1)), s_interp(min(length(s_interp), ival_mid+1)), obj.N_interp);
-            traj_pts = [ppval(x_spline, interp_pts)' ppval(y_spline, interp_pts)'];
-            s_idx_min = min_idx(traj_pts - repmat(veh_pos', obj.N_interp, 1));
-            
-            dfun = @(t) norm(veh_pos - [ppval(x_spline,t); ppval(y_spline, t)]);
-            s = interp_pts(s_idx_min);  % distance along path
-            s = fminsearch(dfun,s);
+            [rc, drc, kappa] = obj.get_road_state(x');
         end
     end
 end

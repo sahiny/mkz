@@ -4,6 +4,8 @@ classdef car_inputs < matlab.System & matlab.system.mixin.Propagates
         wheel_rad = 0.392;     % wheel radius [m]
         trans_eff = 0.79;      % ratio power at wheels / power at engine
         steer_ratio = 16.5;    % ratio steering wheel angle / wheel angle
+
+        brake_gain = 1;
         
         % Inverse engine map (engine torque, engine speed) -> throttle
         inv_engine_map_file = 'engine_map.mat';
@@ -48,54 +50,64 @@ classdef car_inputs < matlab.System & matlab.system.mixin.Propagates
         end
         % outputs
         function out = getNumOutputsImpl(obj)
-            out = 2;
+            out = 3;
         end
-        function [o1, o2] = getOutputDataTypeImpl(obj)
+        function [o1, o2, o3] = getOutputDataTypeImpl(obj)
             o1 = 'double';
             o2 = 'double';
+            o3 = 'double';
         end
-        function [o1, o2] = getOutputSizeImpl(obj)
+        function [o1, o2, o3] = getOutputSizeImpl(obj)
             o1 = 1;
             o2 = 1;
+            o3 = 1;
         end
-        function [o1, o2] = getOutputNamesImpl(obj)
+        function [o1, o2, o3] = getOutputNamesImpl(obj)
             o1 = 'steering_angle';
             o2 = 'throttle';
+            o3 = 'braking';
         end
-        function [c1, c2] = isOutputComplexImpl(obj)
+        function [c1, c2, c3] = isOutputComplexImpl(obj)
             c1 = false;
             c2 = false;
+            c3 = false;
         end
-        function [f1, f2] = isOutputFixedSizeImpl(obj)
+        function [f1, f2, f3] = isOutputFixedSizeImpl(obj)
             f1 = true;
             f2 = true;
+            f3 = true;
         end
         
-        function [steering_angle, throttle] = stepImpl(obj, delta_f, F_w, rawdata)
-            avg_rpm = (rawdata.AVy_L1 + rawdata.AVy_L2 + ...
-                       rawdata.AVy_R1 + rawdata.AVy_R2) / 4;
-            whl_torque = obj.wheel_rad * F_w;
+        function [steering_angle, throttle, braking] = stepImpl(obj, delta_f, F_w, rawdata)
 
-            eng_rpm = rawdata.AV_Eng;
+            throttle = 0;
+            braking = 0;
+            steering_angle = 0;
 
-            eng_torque = whl_torque * avg_rpm / eng_rpm / obj.trans_eff;
+            if F_w > 0
+                avg_rpm = (rawdata.AVy_L1 + rawdata.AVy_L2 + ...
+                           rawdata.AVy_R1 + rawdata.AVy_R2) / 4;
+                whl_torque = obj.wheel_rad * F_w;
 
-            c_th = interp2(obj.eng_map_F, obj.eng_map_w, obj.eng_map_th, ...
-                               eng_torque,  eng_rpm);
+                eng_rpm = rawdata.AV_Eng;
 
-            c_sa = delta_f * obj.steer_ratio;
+                eng_torque = whl_torque * avg_rpm / eng_rpm / obj.trans_eff;
 
-            % Sometimes get NaNs out from Carsim
-            if ~ isnan(c_th)
-                throttle = c_th;
-            else
+                c_th = interp2(obj.eng_map_F, obj.eng_map_w, obj.eng_map_th, ...
+                                   eng_torque,  eng_rpm);
                 throttle = 0;
+                if ~isnan(c_th)
+                    % Sometimes get NaNs out from Carsim
+                    throttle = c_th;
+                end
+            else
+                % TODO: braking
+                braking = obj.brake_gain * abs(F_w);
             end
 
+            c_sa = delta_f * obj.steer_ratio;
             if ~isnan(c_sa)
                 steering_angle = c_sa;
-            else
-                throttle = 0;
             end
         end
     end
