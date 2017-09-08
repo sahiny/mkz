@@ -61,7 +61,7 @@
       
       obj.delta_f = 0;
       
-      obj.barrier_val = 0;
+      obj.barrier_val = -1;
     end
     
     function ds = getDiscreteStateImpl(obj)

@@ -61,16 +61,10 @@ static void main_polysync_controller()
 //
 int main(int, const char * const [])
 {
-  // Initialize the application.
-  // You do not need to do this more than one time.
   polysync_controller_initialize();
 
-  // Invoke the entry-point functions.
-  // You can call entry-point functions multiple times.
   main_polysync_controller();
 
-  // Terminate the application.
-  // You do not need to do this more than one time.
   polysync_controller_terminate();
   return 0;
 }

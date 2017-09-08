@@ -52,7 +52,7 @@ assignin('base','ControlInfoBus', ControlInfoBus);
 % Bus object: DataBus 
 clear elems;
 elems(1) = Simulink.BusElement;
-elems(1).Name = 'lat';
+elems(1).Name = 'latitude';
 elems(1).Dimensions = 1;
 elems(1).DimensionsMode = 'Fixed';
 elems(1).DataType = 'double';
@@ -64,7 +64,7 @@ elems(1).DocUnits = sprintf('rad');
 elems(1).Description = sprintf('latitude');
 
 elems(2) = Simulink.BusElement;
-elems(2).Name = 'long';
+elems(2).Name = 'longitude';
 elems(2).Dimensions = 1;
 elems(2).DimensionsMode = 'Fixed';
 elems(2).DataType = 'double';
