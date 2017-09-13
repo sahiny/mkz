@@ -9,12 +9,11 @@
 
     v_des = 28/3.6;
 
-    H_x = diag([1 0.01]);
-    f_x = [-28/3.6; 0];
-    H_u = 1;
-    f_u = 0;
+    M_p = 1;   % proportional weight in QP [1/(m/s)^2]
+    M_d = 1;   % derivative weight in QP   [1/N^2]
+    M_i = 1;   % integral weight in QP     [1/N^2]
 
-    K_i = 50;    % integral gain
+    K_i = 100;   % integral gain (v_err -> F_w)
 
     sol_opts = struct('DataType', 'double', 'MaxIter', 200, ...
                       'FeasibilityTol', 1e-6, 'IntegrityChecks', true);
@@ -129,12 +128,8 @@
     % update
     function updateImpl(obj, state, dt)
       x_acc = [state.mu; state.h];
-
-      u_I = obj.K_i * obj.v_err;
-
-      d_lk = state.nu * state.r;
        
-      K_ct = [-obj.f0bar/obj.M - d_lk;
+      K_ct = [-obj.f0bar/obj.M - state.nu * state.r;
               obj.vl];
 
       A = obj.A_acc;
@@ -142,21 +137,18 @@
       K = obj.A_int * K_ct;
       E = obj.E_acc;
       
-      R_x = obj.H_x;
-      r_x = obj.f_x;
-      R_u = obj.H_u;
-      r_u = obj.f_u;
-
+      R_x = diag([1 0.01]);
+      r_x = [-obj.v_des; 0];
       A_x = obj.data.poly_A;
       b_x = obj.data.poly_b;
 
-      H = B'*R_x*B + R_u;
-      f = r_u + B'*R_x*(A*x_acc + K) + B'*r_x;
+      H = obj.M_p * B'*R_x*B + obj.M_d + obj.M_i;
+      f = obj.M_p * (B'*R_x*(A*x_acc + K) + B' * r_x) - (obj.M_i * (obj.K_i * obj.v_err) + obj.M_d * obj.F_w);
       A_constr = [A_x*B; A_x*B; 1; -1];
-      b_constr = [b_x - A_x*A*x_acc - A_x*K - A_x*B*u_I; 
-                b_x - A_x*A*x_acc - A_x*K - A_x*B*u_I;
-                obj.data.con.Fw_max - u_I;
-                -obj.data.con.Fw_min + u_I];
+      b_constr = [b_x - A_x*A*x_acc - A_x*K; 
+                b_x - A_x*A*x_acc - A_x*K;
+                obj.data.con.Fw_max;
+                -obj.data.con.Fw_min];
 
       % Objective 0.5 x' H x + f' x
       % 
@@ -176,11 +168,12 @@
                   
       if status > 0
         % qp solved successfully
-        obj.F_w = u + obj.K_i * obj.v_err;
+        obj.F_w = u;
 
         obj.v_err = obj.v_err + dt * (obj.v_des - state.mu);
 
         % Prevent excessive wind-up
+        obj.v_err = ((10-dt)/10)*obj.v_err 
         obj.v_err = min(obj.v_err, 1000/obj.K_i);
         obj.v_err = max(obj.v_err, -1000/obj.K_i);
       else
