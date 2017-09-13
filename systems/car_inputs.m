@@ -32,11 +32,11 @@ classdef car_inputs < matlab.System & matlab.system.mixin.Propagates
          % Error handling for input values
         function validateInputsImpl(~, ~, ~, in3)
            if  ~isstruct(in3)
-                  error(message('simdemos:MLSysBlockMsg:BusInput'));
+                  error('Not a struct');
            end
 
            if (~(isfield(in3,'AVy_L1') && isfield(in3,'AV_Eng')))
-                error(message('simdemos:MLSysBlockMsg:InputBusElements'));
+                error('No such fields');
            end
         end
         % inputs

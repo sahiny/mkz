@@ -34,11 +34,11 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
          % Error handling for input values
         function validateInputsImpl(~,in)
            if  ~isstruct(in)
-                  error(message('simdemos:MLSysBlockMsg:BusInput'));
+                  error('Input must be struct');
            end
 
-           if (~(isfield(in,'lat') && isfield(in,'long')))
-                error(message('simdemos:MLSysBlockMsg:InputBusElements'));
+           if (~(isfield(in,'latitude') && isfield(in,'longitude')))
+                error('Invalid inputs to roads');
            end
         end
         % inputs
@@ -75,7 +75,7 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
         
         function [lk_acc_state, road_left] = stepImpl(obj, data)
             % Return global coordinate of vehicle
-            veh_pos = get_vehicle_pos(obj, data.lat, data.long, 0);
+            veh_pos = get_vehicle_pos(obj, data.latitude, data.longitude, 0);
             
             veh_pos = veh_pos - [data.x_CG*cos(data.Yaw) - data.y_CG*sin(data.Yaw);
                 data.x_CG*sin(data.Yaw) + data.y_CG*cos(data.Yaw)];

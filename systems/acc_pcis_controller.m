@@ -77,7 +77,7 @@
       obj.E_acc = obj.A_int * E_acc_ct;
 
       obj.F_w = 0;
-      obj.barrier_val = 0;
+      obj.barrier_val = -1;
     end
     
     function ds = getDiscreteStateImpl(obj)
