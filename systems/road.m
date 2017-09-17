@@ -1,8 +1,8 @@
 classdef road < matlab.System & matlab.system.mixin.Propagates
     
     properties(Nontunable)
-        lat0 = 42.30095833;     % local center latitude
-        long0 = -83.69758056;   % local center longitude
+        lat0 = 42.30095833;     % local center latitude   [deg]
+        long0 = -83.69758056;   % local center longitude  [deg]
         h0 = 0;                 % local center altitude
         pathfile = 'mcity/fixed_path.ascii';    % path in local (xE, yN)
         circular = 0;
@@ -74,16 +74,20 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
         end
         
         function [lk_acc_state, road_left] = stepImpl(obj, data)
-            % Return global coordinate of vehicle
-            veh_pos = get_vehicle_pos(obj, data.latitude, data.longitude, 0);
+            % position of gps receiver in (xEast, yNorth)
+            r_gps = get_vehicle_pos(obj, data.latitude, data.longitude, 0);
             
-            veh_pos = veh_pos - [data.x_CG*cos(data.Yaw) - data.y_CG*sin(data.Yaw);
-                data.x_CG*sin(data.Yaw) + data.y_CG*cos(data.Yaw)];
-                        
-            [rc, drc, kappa, road_left] = get_road_state(obj, veh_pos);
+            % vector CG -> gps receiver in (xEast, yNorth)
+            r_gps_cg = [data.x_CG * cos(data.Yaw) - data.y_CG * sin(data.Yaw);
+                        data.x_CG * sin(data.Yaw) + data.y_CG * cos(data.Yaw)];    
+
+            % position of CG in (xEast, yNorth)
+            r_cg = r_gps - r_gps_cg;
             
-            road_state.car_x = veh_pos(1);
-            road_state.car_y = veh_pos(2);
+            [rc, drc, kappa, road_left] = get_road_state(obj, r_cg);
+            
+            road_state.car_x = r_cg(1);
+            road_state.car_y = r_cg(2);
             
             road_state.road_x = rc(1);
             road_state.road_y = rc(2);

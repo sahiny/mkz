@@ -60,7 +60,7 @@ elems(1).SampleTime = -1;
 elems(1).Complexity = 'real';
 elems(1).Min = [];
 elems(1).Max = [];
-elems(1).DocUnits = sprintf('rad');
+elems(1).DocUnits = sprintf('deg');
 elems(1).Description = sprintf('latitude');
 
 elems(2) = Simulink.BusElement;
@@ -72,7 +72,7 @@ elems(2).SampleTime = -1;
 elems(2).Complexity = 'real';
 elems(2).Min = [];
 elems(2).Max = [];
-elems(2).DocUnits = sprintf('rad');
+elems(2).DocUnits = sprintf('deg');
 elems(2).Description = sprintf('longitude');
 
 elems(3) = Simulink.BusElement;
@@ -97,7 +97,7 @@ elems(4).Complexity = 'real';
 elems(4).Min = [];
 elems(4).Max = [];
 elems(4).DocUnits = sprintf('rad');
-elems(4).Description = sprintf('Yaw angle');
+elems(4).Description = sprintf('Yaw angle (0 is east)');
 
 elems(5) = Simulink.BusElement;
 elems(5).Name = 'YawRate';
@@ -108,7 +108,7 @@ elems(5).SampleTime = -1;
 elems(5).Complexity = 'real';
 elems(5).Min = [];
 elems(5).Max = [];
-elems(5).DocUnits = sprintf('deg/s');
+elems(5).DocUnits = sprintf('rad/s');
 elems(5).Description = sprintf('angular velocity');
 
 elems(6) = Simulink.BusElement;
@@ -120,7 +120,7 @@ elems(6).SampleTime = -1;
 elems(6).Complexity = 'real';
 elems(6).Min = [];
 elems(6).Max = [];
-elems(6).DocUnits = sprintf('km/h');
+elems(6).DocUnits = sprintf('m/s');
 elems(6).Description = sprintf('inst CG, local x vel');
 
 elems(7) = Simulink.BusElement;
@@ -132,11 +132,11 @@ elems(7).SampleTime = -1;
 elems(7).Complexity = 'real';
 elems(7).Min = [];
 elems(7).Max = [];
-elems(7).DocUnits = sprintf('km/h');
+elems(7).DocUnits = sprintf('m/s');
 elems(7).Description = sprintf('inst CG, local y vel');
 
 elems(8) = Simulink.BusElement;
-elems(8).Name = 'x_CG';
+elems(8).Name = 'x_gps_cg';
 elems(8).Dimensions = 1;
 elems(8).DimensionsMode = 'Fixed';
 elems(8).DataType = 'double';
@@ -144,11 +144,11 @@ elems(8).SampleTime = -1;
 elems(8).Complexity = 'real';
 elems(8).Min = [];
 elems(8).Max = [];
-elems(8).DocUnits = sprintf('mm');
+elems(8).DocUnits = sprintf('m');
 elems(8).Description = sprintf('x distance origin to sprung mass CG');
 
 elems(9) = Simulink.BusElement;
-elems(9).Name = 'y_CG';
+elems(9).Name = 'y_gps_cg';
 elems(9).Dimensions = 1;
 elems(9).DimensionsMode = 'Fixed';
 elems(9).DataType = 'double';
@@ -156,7 +156,7 @@ elems(9).SampleTime = -1;
 elems(9).Complexity = 'real';
 elems(9).Min = [];
 elems(9).Max = [];
-elems(9).DocUnits = sprintf('mm');
+elems(9).DocUnits = sprintf('m');
 elems(9).Description = sprintf('y distance origin to sprung mass CG');
 
 elems(10) = Simulink.BusElement;
@@ -338,7 +338,7 @@ elems(24).SampleTime = -1;
 elems(24).Complexity = 'real';
 elems(24).Min = [];
 elems(24).Max = [];
-elems(24).DocUnits = sprintf('');
+elems(24).DocUnits = sprintf('Nm');
 elems(24).Description = sprintf('Engine output torque');
 
 elems(25) = Simulink.BusElement;
