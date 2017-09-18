@@ -59,10 +59,6 @@ function [msg] = get_ba_message(brak, thro, stee, gear, turn)
 		turn_c = turn;
 	end
 
-	% Ground truth string
-	% pub_string = sprintf('OPENCAV:BRAKE%0.3f,THROTTLE%0.3f,STEER%0.3f,GEAR%d,SIGNAL%d,END', ...
-		     		      % brak, thro, stee, gear, turn)
-
 	msg = PsByteArrayMessage.zeros();
 
 	head = [uint8('OPENCAV:BRAKE0.') ...
