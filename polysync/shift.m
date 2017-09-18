@@ -18,10 +18,10 @@ function shift(pub, new_gear, dt)
 		polysync.Sleep(dt);
 	end
 
-	pub_msg = get_ba_message(0, 0, 0, ...
+	pub_msg = get_ba_message(0.25, 0, 0, ...
 				ps_gear_position_kind.GEAR_POSITION_INVALID, ...
 				ps_platform_turn_signal_kind.PLATFORM_TURN_SIGNAL_INVALID);
-	for t=0:dt:3
+	for t=0:dt:2
 		pub_msg.Header.Timestamp = polysync.GetTimestamp;
 		pub.step(pub_msg);
 		polysync.Sleep(dt);
