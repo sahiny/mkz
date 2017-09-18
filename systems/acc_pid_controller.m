@@ -1,7 +1,7 @@
  classdef acc_pid_controller < matlab.System & ...
                          matlab.system.mixin.Propagates
   properties(Nontunable)
-    mu_des = 28/3.6       % desired speed
+    mu_des = 28/3.6;       % desired speed
     K_p = 0.6*0.25;       % proportional weight
     K_d = 3*0.25*0.7/40;  % derivative weight
     K_i = 1.2*0.25/0.7;   % integral weight

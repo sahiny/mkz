@@ -1,8 +1,8 @@
 % Script to manually modify waypoints along path
 
-tiff_file = 'mcity/mcity.tiff';			% background geotiff layer
-orig_file = 'mcity/fixed_path.ascii';	% path to work with
-save_file = 'mcity/fixed_path.ascii';	% file for saving modified path
+tiff_file = '../mcity/mcity.tiff';			% background geotiff layer
+orig_file = '../mcity/mcity_east.ascii';	% path to work with
+save_file = '../mcity/mcity_east.ascii';	% file for saving modified path
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -18,7 +18,7 @@ end
 
 r = road;
 r.pathfile = orig_file;
-r.setup(0);
+r.setup(struct('latitude', 0, 'longitude', 0));
 
 % Convert to GPS
 [orig_lat, orig_long] = enu2geodetic(orig_local(:,1), ...
@@ -30,11 +30,8 @@ r.setup(0);
 % extract curvature information for each waypoint
 s_vec = 0:0.25:orig_local(end,end);
 
-[s_cell, xs_cell, ys_cell] = arrayfun(@(s) r.get_pos(s), s_vec, ...
-									  'UniformOutput', false);
-
-[rc, drc, kappa] = cellfun(@(s, xs, ys) r.get_road_state(s, xs, ys), ...
-					  s_cell, xs_cell, ys_cell, ...
+[rc, drc, kappa, ~] = arrayfun(@(s) r.get_road_state(s), ...
+					  s_vec, ...
 					  'UniformOutput', false);
 rc = cell2mat(rc);
 drc = cell2mat(drc)';

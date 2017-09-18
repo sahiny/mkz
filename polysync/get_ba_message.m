@@ -54,7 +54,7 @@ function [msg] = get_ba_message(brak, thro, stee, gear, turn)
 	end
 	msg.Bytes(42) = uint8('0') + floor(abs(stee));
 	msg.Bytes(43) = uint8('.');
-	msg.Bytes(44:47) = get_ascii_rep(abs(stee) -  floor(abs(stee)), 4)
+	msg.Bytes(44:47) = get_ascii_rep(abs(stee) -  floor(abs(stee)), 4);
 	msg.Bytes(48:52) = uint8(',GEAR');
 	msg.Bytes(53) = uint8('0') + uint8(gear);
 
@@ -62,7 +62,6 @@ function [msg] = get_ba_message(brak, thro, stee, gear, turn)
 	msg.Bytes(61) = uint8('0') + uint8(turn);
 
 	msg.Bytes(62:65) = uint8(',END');
-	char(msg.Bytes(1:65)')
 
 	msg.BytesSize = uint32(65);
 end

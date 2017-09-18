@@ -4,7 +4,7 @@ function [ascii_code] = get_ascii_rep(num, len)
 	assert(num < 1)
 	ascii_code = uint8(zeros(1,len));
 	for i = 1:len
-		digit = floor(10^(i) * num);
+		digit = max(0, floor(10^(i) * num));
 		ascii_code(i) = uint8('0') + digit;
 		num = num - 10^(-i) * digit;
 	end
