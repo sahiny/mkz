@@ -51,7 +51,6 @@ function [msg] = get_ba_message(brak, thro, stee, gear, turn)
 	if stee > 0
 		msg.Bytes(1:40) = head;
 		msg.Bytes(41:64) = tail;
-		msg.BytesSize = 64;
 	else
 		msg.Bytes(1:40) = head;
 		msg.Bytes(41) = uint8('-');
