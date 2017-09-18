@@ -117,7 +117,7 @@
       
       if mu < obj.data.con.u_min
         % Use very simple P controller
-        obj.delta_f = -x_lk(3);
+        obj.delta_f = -x_lk(1)-0.05*x_lk(3);
         return
       end
        
