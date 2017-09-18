@@ -338,7 +338,7 @@ elems(24).SampleTime = -1;
 elems(24).Complexity = 'real';
 elems(24).Min = [];
 elems(24).Max = [];
-elems(24).DocUnits = sprintf('Nm');
+elems(24).DocUnits = sprintf('N*m');
 elems(24).Description = sprintf('Engine output torque');
 
 elems(25) = Simulink.BusElement;

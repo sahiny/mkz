@@ -3,6 +3,12 @@
 !*/
 
 codegen
+slprj
 data/*
 
 ospl-*
+
+*.autosave
+*.mexa64
+
+*.mat

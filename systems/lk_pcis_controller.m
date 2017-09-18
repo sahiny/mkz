@@ -61,7 +61,7 @@
       
       obj.delta_f = 0;
       
-      obj.barrier_val = -1;
+      obj.barrier_val = -0.1;
     end
     
     function ds = getDiscreteStateImpl(obj)
@@ -115,9 +115,10 @@
       mu = lk_state.mu;
       r_d = lk_state.r_d;
       
-      if mu < 1
-          obj.delta_f = 0;
-          return
+      if mu < obj.data.con.u_min
+        % Use very simple P controller
+        obj.delta_f = -x_lk(3);
+        return
       end
        
       A_lk = [0, 1, mu, 0; 
@@ -191,6 +192,12 @@
         obj.delta_f = u;
       else
         % infeasible: keep control constant
+        status
+        x_lk
+        mu
+        r_d
+        all(A_x*x_lk <= b_x)
+        obj.barrier_val = -0.05;
       end
      
     end

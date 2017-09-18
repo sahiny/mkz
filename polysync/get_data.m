@@ -4,7 +4,7 @@ function [rawdata] = get_data(msg_mot)
 
     normDeg = @(x) pi-mod(pi-x, 2*pi);
 
-    % vector GPS -> CG    (IS THIS PLUS OR MINUS??)
+    % vector GPS -> CG
     r_gps_cg = [.99; 0];                     
 
     % rotational speed
@@ -26,29 +26,29 @@ function [rawdata] = get_data(msg_mot)
     rawdata.Vy = v_cg(2);           				% velocity at CG, car y axis   (m/s)
     rawdata.x_gps_cg = r_gps_cg(1); 				% position of CG from GPS, car x axis (m)
     rawdata.y_gps_cg = r_gps_cg(2);					% position of CG from GPS, car y axis (m)
-    rawdata.steer_L1 = NaN;
-    rawdata.steer_R1 = NaN;
-    rawdata.Alpha_L1 = NaN;
-    rawdata.Alpha_R1 = NaN;
-    rawdata.Fy_L1 = NaN;
-    rawdata.Fy_R1 = NaN;
-    rawdata.Fz_L1 = NaN;
-    rawdata.Fz_R1 = NaN;
-    rawdata.Fx  = NaN;
-    rawdata.Gear_CL = NaN;
-    rawdata.RGear_Tr = NaN;
-    rawdata.AV_Eng = NaN;
-    rawdata.Throttle = NaN;
-    rawdata.Throttle_Eng = NaN;			
-    rawdata.M_EngOut = NaN;
-    rawdata.AVy_L1 = NaN;
-    rawdata.AVy_L2 = NaN;
-    rawdata.AVy_R1 = NaN;
-    rawdata.AVy_R2 = NaN;
-    rawdata.My_Dr_L1 = NaN;
-    rawdata.My_Dr_L2 = NaN;
-    rawdata.My_Dr_R1 = NaN;
-    rawdata.My_Dr_R2 = NaN;
-    rawdata.F_pedal = NaN;
-    rawdata.Bk_pedal = NaN;
+    rawdata.steer_L1 = 0;
+    rawdata.steer_R1 = 0;
+    rawdata.Alpha_L1 = 0;
+    rawdata.Alpha_R1 = 0;
+    rawdata.Fy_L1 = 0;
+    rawdata.Fy_R1 = 0;
+    rawdata.Fz_L1 = 0;
+    rawdata.Fz_R1 = 0;
+    rawdata.Fx  = 0;
+    rawdata.Gear_CL = 0;
+    rawdata.RGear_Tr = 0;
+    rawdata.AV_Eng = 0;
+    rawdata.Throttle = 0;
+    rawdata.Throttle_Eng = 0;			
+    rawdata.M_EngOut = 0;
+    rawdata.AVy_L1 = 0;
+    rawdata.AVy_L2 = 0;
+    rawdata.AVy_R1 = 0;
+    rawdata.AVy_R2 = 0;
+    rawdata.My_Dr_L1 = 0;
+    rawdata.My_Dr_L2 = 0;
+    rawdata.My_Dr_R1 = 0;
+    rawdata.My_Dr_R2 = 0;
+    rawdata.F_pedal = 0;
+    rawdata.Bk_pedal = 0;
 end

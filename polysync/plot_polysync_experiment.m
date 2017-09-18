@@ -1,16 +1,22 @@
-load run_3
+load data/run_2
 
-tmin = 20;
-tmax = 30;
+tmin = 15;
+tmax = 25;
+% tmin = 0;
+% tmax = Inf;
 
 tidx = find(and(rawdata.longitude.Time < tmax, ...
 				tmin < rawdata.longitude.Time));
 
 % Convert BA message
-brake = str2num(char(squeeze(ba_message.Bytes.Data(14:19,1,1:end))'));
-throttle = str2num(char(squeeze(ba_message.Bytes.Data(29:34,1,1:end))'));
-steering = str2num(char(squeeze(ba_message.Bytes.Data(42:47,1,1:end))'));
+is_ba = exist('ba_message');
+is_df = exist('delta_f');
 
+if is_ba
+	brake = str2num(char(squeeze(ba_message.Bytes.Data(14:19,1,1:end))'));
+	throttle = str2num(char(squeeze(ba_message.Bytes.Data(29:34,1,1:end))'));
+	steering = str2num(char(squeeze(ba_message.Bytes.Data(42:47,1,1:end))'));
+end
 
 figure(1); clf
 plot(rawdata.longitude.Data(tidx), rawdata.latitude.Data(tidx))
@@ -26,7 +32,6 @@ ylabel('y')
 subplot(312)
 hold on
 plot(lk_acc_state.nu.Time(tidx), lk_acc_state.nu.Data(tidx))
-ylim([-1 1]);
 ylabel('nu')
 
 subplot(313)
@@ -48,3 +53,13 @@ plot(lk_acc_state.mu.Time(tidx), lk_acc_state.mu.Data(tidx))
 ylabel('mu')
 ylim([0, 10])
 
+
+figure(4); clf
+if is_df
+	idx = find(and(delta_f.Time < tmax, delta_f.Time > tmin))
+	subplot(211)
+	plot(delta_f.Time(idx), squeeze(delta_f.Data(1,1,idx)))
+	subplot(212); hold on
+	plot(lk_cinfo.barrier_val.Time(idx), squeeze(lk_cinfo.barrier_val.Data(idx)))
+	plot(xlim, [0 0], '-g')
+end
