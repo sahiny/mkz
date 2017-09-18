@@ -10,12 +10,20 @@ tidx = find(and(rawdata.longitude.Time < tmax, ...
 
 % Convert BA message
 is_ba = exist('ba_message');
-is_df = exist('delta_f');
 
 if is_ba
-	brake = str2num(char(squeeze(ba_message.Bytes.Data(14:19,1,1:end))'));
-	throttle = str2num(char(squeeze(ba_message.Bytes.Data(29:34,1,1:end))'));
-	steering = str2num(char(squeeze(ba_message.Bytes.Data(42:47,1,1:end))'));
+	NUM = 70;   % number of bytes to read
+	string_vec = char(squeeze(ba_message.Bytes.Data(1:NUM,1,1:end))');
+	string_cell = mat2cell(string_vec, ones(1, size(string_vec,1)), NUM);
+
+	pattern = 'OPENCAV:BRAKE%f,THROTTLE%f,STEER%f,GEAR%d,SIGNAL%d,END';
+
+	data = cellfun(@(s) sscanf(s, pattern), string_cell, 'UniformOutput', false);
+	data = cell2mat(data');
+
+	brake = data(1,:);
+	throttle = data(2,:);
+	steering = data(3,:);
 end
 
 figure(1); clf
@@ -55,7 +63,7 @@ ylim([0, 10])
 
 
 figure(4); clf
-if is_df
+if exist('delta_f')
 	idx = find(and(delta_f.Time < tmax, delta_f.Time > tmin))
 	subplot(211)
 	plot(delta_f.Time(idx), squeeze(delta_f.Data(1,1,idx)))
