@@ -57,7 +57,7 @@ ylim([0, 3*L_acc.con.u_max])
 subplot(312)
 hold on
 plot(rawdata.Fx.Time, rawdata.Fx.Data)
-plot(F_w.Time, F_w.Data(:), 'k--')
+% plot(F_w.Time, F_w.Data(:), 'k--')
 plot(xlim, [L_acc.con.Fw_max L_acc.con.Fw_max], '--g')
 plot(xlim, [L_acc.con.Fw_min L_acc.con.Fw_min], '--g')
 ylim([1.1*L_acc.con.Fw_min, 1.1*L_acc.con.Fw_max])
@@ -90,11 +90,11 @@ ylim([-0.1, 1.1*max(lk_control_info.barrier_val.Data)])
 plot(xlim, [0 0], '--')
 ylabel('poly_dist')
 
-subplot(313)
-hold on
-plot(acc_control_info.barrier_val.Time, acc_control_info.barrier_val.Data)
-ylim([-0.1, 1.1*max(acc_control_info.barrier_val.Data)])
-plot(xlim, [0 0], '--')
-ylabel('poly_dist')
+% subplot(313)
+% hold on
+% plot(acc_control_info.barrier_val.Time, acc_control_info.barrier_val.Data)
+% ylim([-0.1, 1.1*max(acc_control_info.barrier_val.Data)])
+% plot(xlim, [0 0], '--')
+% ylabel('poly_dist')
 
 

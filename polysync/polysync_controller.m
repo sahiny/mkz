@@ -1,13 +1,14 @@
+dt = 1e-2;
+
 %% polysync_controller: controls via polysync bus
 function polysync_controller()
-	dt = 1e-2;
 	stop_distance = 20;   % start braking [m]
 
 	pub = polysync.Publisher('MessageType', 'ByteArrayMessage');
 	pub_cm = polysync.Publisher('MessageType', 'CommandMessage');
 
 	sub_mo = polysync.Subscriber('MessageType', 'PlatformMotionMessage');
-	sub_mo.SourceGuid = 1688903407881414;
+	% should only get from sensor ID 1
 
 	% Set up systems
 	trans_out = road;
@@ -34,8 +35,26 @@ function polysync_controller()
 	trans_in.steer_ratio = 16.5;
 	trans_in.setup(0,0,struct('AVy_L1', 0, 'AV_Eng', 0));
 
+	% Shift to D
+	msg = get_ba_message(0., throttle_com, 16.5*delta_f, ...
+			ps_gear_position_kind.GEAR_POSITION_DRIVE, ...
+			ps_platform_turn_signal_kind.PLATFORM_TURN_SIGNAL_INVALID);
+
+	% phase 0: shifting to D
+	% phase 1: LK following route
+	% phase 2: car stopping
+	% phase 3: shifting to P
+
+	% Phase variables
+	br_command = 0;    % braking phase
+
+	phase = 0;
+	shift(pub, ps_gear_position_kind.GEAR_POSITION_DRIVE);
+
+	phase = 1;
+
 	% Control loop
-	while 1
+	while phase < 3
 		% Read data
 		[~, msg] = sub_mo.step();
 		rawdata = get_data(msg)
@@ -43,28 +62,28 @@ function polysync_controller()
 		% Tranform data to model states
 		[lk_acc_state, road_left] = trans_out.step(rawdata)
 
-		% Compute model inputs
-		[F_w, acc_info] = ACC(lk_acc_state, dt);
-		[delta_f, lk_info] = LK(lk_acc_state);
-
-		% Transform model inputs to car inputs
-		[steering_com, throttle_com, brake_com] = trans_in.step(delta_f, F_w, rawdata);
-
-		% Are we close to end?
-		brake_Fw = BrakeRamp(road_left < stop_distance, dt);
-		if brake_Fw > 0
-			brake_com = brake_Fw;
-			throttle_com = 0.;
-		else
-			brake_com = 0.;
-			throttle_com = 0.1;
+		if road_left < 20
+			phase = 2;
 		end
 
-		msg = get_ba_message(brake_com, throttle_com, steering_com, ...
-				ps_gear_position_kind.GEAR_POSITION_INVALID, ...
+		% Compute model inputs
+		[delta_f, lk_info] = LK(lk_acc_state);
+
+		if phase == 1
+			msg = get_ba_message(0., throttle_com, 16.5*delta_f, ...
+				ps_gear_position_kind.GEAR_POSITION_DRIVE, ...
 				ps_platform_turn_signal_kind.PLATFORM_TURN_SIGNAL_INVALID);
+		elseif phase == 2
+			br_command = max(br_command + 0.3 * dt / 5, 0.3);
+			pub_msg = get_ba_message(br_command, 0, 16.5*delta_f, ...
+				ps_gear_position_kind.GEAR_POSITION_DRIVE, ...
+				ps_platform_turn_signal_kind.PLATFORM_TURN_SIGNAL_INVALID);
+			if abs(rawdata.Vx) <  1e-2
+				phase = 3;
+			end
+		end
+				
 		msg.Header.Timestamp = polysync.GetTimestamp;
-		pub.step(msg);
 
 		cinfo_message = PsCommandMessage.zeros();
 		cinfo_message.Id = embedded.fi(454545, 'Signed', 0, 'WordLength', 64, ...
@@ -75,11 +94,53 @@ function polysync_controller()
 		cinfo_message.Data(2).U.DValue = lk_info.barrier_val;
 		cinfo_message.Data(3).D = ps_parameter_value_kind.PARAMETER_VALUE_DOUBLE;
 		cinfo_message.Data(3).U.DValue = road_left;
-		cinfo_message.DataSize = uint32(3);
+		cinfo_message.Data(4).D = ps_parameter_value_kind.PARAMETER_VALUE_DOUBLE;
+		cinfo_message.Data(4).U.DValue = lk_acc_state.y;
+		cinfo_message.Data(5).D = ps_parameter_value_kind.PARAMETER_VALUE_DOUBLE;
+		cinfo_message.Data(5).U.DValue = lk_acc_state.nu;
+		cinfo_message.Data(6).D = ps_parameter_value_kind.PARAMETER_VALUE_DOUBLE;
+		cinfo_message.Data(6).U.DValue = lk_acc_state.mu;
+		cinfo_message.Data(7).D = ps_parameter_value_kind.PARAMETER_VALUE_DOUBLE;
+		cinfo_message.Data(7).U.DValue = lk_acc_state.dPsi;
+		cinfo_message.Data(8).D = ps_parameter_value_kind.PARAMETER_VALUE_DOUBLE;
+		cinfo_message.Data(8).U.DValue = lk_acc_state.r;
+		cinfo_message.Data(9).D = ps_parameter_value_kind.PARAMETER_VALUE_DOUBLE;
+		cinfo_message.Data(9).U.DValue = lk_acc_state.r_d;
+		cinfo_message.DataSize = uint32(9);
+		cinfo_message.Header.Timestamp = polysync.GetTimestamp;
 
-		% Apply controls
+		pub.step(msg);
 		pub_cm.step(cinfo_message);
 
+		polysync.Sleep(dt);
 	end
+
+	shift(ps_gear_position_kind.GEAR_POSITION_PARK);
 end
 
+%% shift: shift to new gear
+function shift(pub, new_gear)
+	pub_msg = get_ba_message(0.2, 0, 0, ...
+				ps_gear_position_kind.GEAR_POSITION_INVALID, ...
+				ps_platform_turn_signal_kind.PLATFORM_TURN_SIGNAL_INVALID);
+	for t=0:dt:2
+		pub.step(pub_msg);
+		polysync.Sleep(dt);
+	end
+
+	pub_msg = get_ba_message(0.2, 0, 0, ...
+				new_gear, ...
+				ps_platform_turn_signal_kind.PLATFORM_TURN_SIGNAL_INVALID);
+	for t=0:dt:2
+		pub.step(pub_msg);
+		polysync.Sleep(dt);
+	end
+
+	pub_msg = get_ba_message(0, 0, 0, ...
+				ps_gear_position_kind.GEAR_POSITION_INVALID, ...
+				ps_platform_turn_signal_kind.PLATFORM_TURN_SIGNAL_INVALID);
+	for t=0:dt:2
+		pub.step(pub_msg);
+		polysync.Sleep(dt);
+	end
+end
