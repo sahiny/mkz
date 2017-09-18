@@ -1,16 +1,17 @@
 %% polysync_controller: controls via polysync bus
 function polysync_controller()
-  RTK_SENSOR_ID = uint32(1);  % sensor id of RTK GPS
-  DT = 1e-2;          % time step [s]
-  STOP_DISTANCE = 20;       % start braking [m]
-  STEERING_RATIO = 16.5;    % steering ratio of car
+  RTK_SENSOR_ID = 1;    % sensor id of RTK GPS
+  DT = 1e-2;            % time step [s]
+  STOP_DISTANCE = 20;   % start braking [m]
+  STEERING_RATIO = 16;  % steering ratio of car
 
   BRAKE_MAX = 0.3;      % maximal braking when stopping
   BRAKE_TIME = 5;       % brake ramp time [s]
 
   pub = polysync.Publisher('MessageType', 'ByteArrayMessage');
 
-  sub_mo = polysync.Subscriber('MessageType', 'PlatformMotionMessage');
+  sub_mo = polysync.Subscriber('MessageType', 'PlatformMotionMessage', ...
+                               'SensorId', RTK_SENSOR_ID);
 
   % Set up systems
   rd = road;
@@ -43,7 +44,8 @@ function polysync_controller()
   while phase < uint8(3)
     % Read data
     [idx, sub_msg] = sub_mo.step();
-    if idx > 0 && sub_msg.SensorDescriptor.Id == RTK_SENSOR_ID
+
+    if idx > 0
       rawdata = get_data(sub_msg);
 
       % Tranform data to model states
