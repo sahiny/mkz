@@ -2,9 +2,9 @@
 % Shaobing-style ByteArray message.
 % WARNING: will ONLY behave correctly provided that inputs
 % are in specific ranges:
-%   brak \in [0, 1)
-%   thro \in [0, 1)
-%   stee \in (-10, 10)
+%   brak \in [0, 1)		  (double)
+%   thro \in [0, 1)		  (double)
+%   stee \in (-10, 10)	  (double)
 %   gear \in {0, ..., 9}  (uint)
 %   turn \in {0, ..., 9}  (uint)
 function [msg] = get_ba_message(brak, thro, stee, gear, turn)

@@ -3,7 +3,7 @@ function polysync_controller()
   RTK_SENSOR_ID = 1;    % sensor id of RTK GPS
   DT = 1e-2;            % time step [s]
   STOP_DISTANCE = 20;   % start braking [m]
-  ST_RATIO = 16;  % steering ratio of car
+  ST_RATIO = 16;        % steering ratio of car
 
   BRAKE_MAX = 0.3;      % maximal braking when stopping
   BRAKE_TIME = 5;       % brake ramp time [s]
