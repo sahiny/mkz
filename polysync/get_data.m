@@ -5,7 +5,7 @@ function [rawdata] = get_data(msg_mot)
     normDeg = @(x) pi-mod(pi-x, 2*pi);
 
     % vector GPS -> CG    (IS THIS PLUS OR MINUS??)
-    r_gps_cg = [-.99; 0];                     
+    r_gps_cg = [.99; 0];                     
 
     % rotational speed
     omega = msg_mot.RotationRate(3);

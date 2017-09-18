@@ -20,6 +20,7 @@ function polysync_controller()
 	rd.setup(struct('latitude', 0, 'longitude', 0));
 
 	ACC = acc_pid_controller;
+	ACC.max_throttle = 0.28;
 	ACC.setup(struct(), DT);
 
 	LK = lk_pcis_controller;
