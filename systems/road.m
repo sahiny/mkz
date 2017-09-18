@@ -75,14 +75,14 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
         
         function [lk_acc_state, road_left] = stepImpl(obj, data)
             % position of gps receiver in (xEast, yNorth)
-            r_gps = get_vehicle_pos(obj, data.latitude, data.longitude, 0);
+            r_gps = get_vehicle_pos(obj, data.latitude, data.longitude, data.altitude);
             
-            % vector CG -> gps receiver in (xEast, yNorth)
-            r_gps_cg = [data.x_CG * cos(data.Yaw) - data.y_CG * sin(data.Yaw);
-                        data.x_CG * sin(data.Yaw) + data.y_CG * cos(data.Yaw)];    
+            % vector gps receiver -> CG in (xEast, yNorth)
+            r_gps_cg = [data.x_gps_cg * cos(data.Yaw) - data.y_gps_cg * sin(data.Yaw);
+                        data.x_gps_cg * sin(data.Yaw) + data.y_gps_cg * cos(data.Yaw)];    
 
             % position of CG in (xEast, yNorth)
-            r_cg = r_gps - r_gps_cg;
+            r_cg = r_gps + r_gps_cg;
             
             [rc, drc, kappa, road_left] = get_road_state(obj, r_cg);
             

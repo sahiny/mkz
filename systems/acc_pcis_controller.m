@@ -173,7 +173,7 @@
         obj.v_err = obj.v_err + dt * (obj.v_des - state.mu);
 
         % Prevent excessive wind-up
-        obj.v_err = ((10-dt)/10)*obj.v_err 
+        obj.v_err = ((10-dt)/10)*obj.v_err;
         obj.v_err = min(obj.v_err, 1000/obj.K_i);
         obj.v_err = max(obj.v_err, -1000/obj.K_i);
       else

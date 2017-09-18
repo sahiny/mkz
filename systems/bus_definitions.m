@@ -145,7 +145,7 @@ elems(8).Complexity = 'real';
 elems(8).Min = [];
 elems(8).Max = [];
 elems(8).DocUnits = sprintf('m');
-elems(8).Description = sprintf('x distance origin to sprung mass CG');
+elems(8).Description = sprintf('distance GPS to CG in local x');
 
 elems(9) = Simulink.BusElement;
 elems(9).Name = 'y_gps_cg';
@@ -157,7 +157,7 @@ elems(9).Complexity = 'real';
 elems(9).Min = [];
 elems(9).Max = [];
 elems(9).DocUnits = sprintf('m');
-elems(9).Description = sprintf('y distance origin to sprung mass CG');
+elems(9).Description = sprintf('distance GPS to CG in local y');
 
 elems(10) = Simulink.BusElement;
 elems(10).Name = 'steer_L1';
