@@ -11,7 +11,7 @@
 
     H_x = diag([1 0 0.5 0]);
     f_x = zeros(4,1);
-    H_u = 0.25;
+    H_u = 4;
     f_u = 0;
 
     sol_opts = struct('DataType', 'double', 'MaxIter', 200, ...
@@ -118,9 +118,9 @@
         return
       end
 
-      if mu < obj.data.con.u_min
+      if mu < 1
         % Use very simple P controller
-        obj.delta_f = -0.1*(x_lk(1)+0.05*x_lk(3));
+        obj.delta_f = 0;
         return
       end
        

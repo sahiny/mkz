@@ -174,7 +174,7 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
       % find closest point on path
       pt_idx_min = min_idx( obj.path_(:, 1:2) - repmat(veh_pos', size(obj.path_,1), 1) );
       interp_ival = 1 + mod((pt_idx_min-obj.N_path:pt_idx_min+obj.N_path) - 1, ...
-        obj.size_path-1);
+                            obj.size_path-1);
       
       if obj.circular
         % Path is a loop
@@ -204,8 +204,8 @@ classdef road < matlab.System & matlab.system.mixin.Propagates
       traj_pts = [ppval(x_spline, interp_pts)' ppval(y_spline, interp_pts)'];
       s_idx_min = min_idx(traj_pts - repmat(veh_pos', obj.N_interp, 1));
       
-      dfun = @(t) norm(veh_pos - [ppval(x_spline,t); ppval(y_spline, t)]);
-      s = fminsearch(dfun, interp_pts(s_idx_min));
+      s = fminsearch(@(t) norm(veh_pos - [ppval(x_spline,t); ppval(y_spline, t)]), ...
+                     interp_pts(s_idx_min));
 
       road_left = obj.len_path - s;
 
