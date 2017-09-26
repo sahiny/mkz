@@ -1,7 +1,6 @@
 %% polysync_controller: control MKZ over polysync bus
 function polysync_controller()
   RTK_SENSOR_ID = 1;    % sensor id of RTK GPS
-  DT = 1e-2;            % time step [s]
   STOP_DISTANCE = 20;   % start braking [m]
   ST_RATIO = 16;        % steering ratio of car
 
@@ -23,11 +22,12 @@ function polysync_controller()
   rd.setup(struct());
 
   ACC = acc_pid_controller;
+  ACC.mu_des = 26/3.6;
   ACC.max_throttle = 0.28;
-  ACC.setup(struct(), DT);
+  ACC.setup(struct(), 0.0);
 
   LK = lk_pcis_controller;
-  LK.H_u = 0.05;   % weight in QP for steering (larger -> less aggressive centering)
+  LK.H_u = 4;   % weight in QP for steering (larger -> less aggressive centering)
   LK.setup(struct());
 
   % phase 0: shifting to D
@@ -38,9 +38,14 @@ function polysync_controller()
   % Phase variables
   brake_com = 0;    % braking phase
 
+  % Save last time
+  last_time = embedded.fi(0, 'Signedness', 'Unsigned', ...
+                          'FractionLength', 0, ...
+                          'WordLength', 64);
+
   phase = uint8(0);
   % Shift to D
-  shift(pub, ps_gear_position_kind.GEAR_POSITION_DRIVE, DT);
+  shift(pub, ps_gear_position_kind.GEAR_POSITION_DRIVE, 0.01);
 
   phase = phase + 1;
 
@@ -50,6 +55,17 @@ function polysync_controller()
     [idx, sub_msg] = sub_mo.step();
 
     if idx > 0
+
+      % Take care of timing
+      dt = 0;
+      if last_time ~= embedded.fi(0, 'Signedness', 'Unsigned', ...
+                                  'FractionLength', 0, ...
+                                  'WordLength', 64);
+        dt = double(sub_msg.Timestamp - last_time)/1e6;
+      end
+      last_time = sub_msg.Timestamp;
+
+      % Convert data
       rawdata = get_data(sub_msg);
 
       % Tranform data to model states
@@ -64,12 +80,12 @@ function polysync_controller()
 
       if phase == uint8(1)
         % ACC controls speed
-        [throttle_com] = ACC(lk_acc_state, DT)
+        [throttle_com] = ACC(lk_acc_state, dt)
         pub_msg = get_ba_message([], throttle_com, ST_RATIO*delta_f);
 
       elseif phase == uint8(2)
         % Braking phase
-        brake_com = max(brake_com + BRAKE_MAX*DT/BRAKE_TIME, BRAKE_MAX);
+        brake_com = max(brake_com + BRAKE_MAX*dt/BRAKE_TIME, BRAKE_MAX);
         pub_msg = get_ba_message(brake_com, [], ST_RATIO*delta_f);
 
         if abs(rawdata.Vx) <  1e-2
@@ -82,9 +98,8 @@ function polysync_controller()
           
       pub_msg.Header.Timestamp = polysync.GetTimestamp;
       pub.step(pub_msg);    
-      polysync.Sleep(DT);
     end
   end
 
-  shift(pub, ps_gear_position_kind.GEAR_POSITION_PARK, DT);
+  shift(pub, ps_gear_position_kind.GEAR_POSITION_PARK, 0.01);
 end

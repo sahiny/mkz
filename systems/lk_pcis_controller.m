@@ -120,7 +120,7 @@
 
       if mu < 1
         % Use very simple P controller
-        obj.delta_f = 0;
+        obj.delta_f = -0.1*(x_lk(1)+0.05*x_lk(3));
         return
       end
        
