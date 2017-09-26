@@ -1,9 +1,9 @@
-load data/run_2
+load 'data/run-736957.6425.mat'
 
-tmin = 15;
-tmax = 25;
-% tmin = 0;
-% tmax = Inf;
+% tmin = 15;
+% tmax = 25;
+tmin = 0;
+tmax = Inf;
 
 tidx = find(and(rawdata.longitude.Time < tmax, ...
 				tmin < rawdata.longitude.Time));
@@ -18,12 +18,18 @@ if is_ba
 
 	pattern = 'OPENCAV:BRAKE%f,THROTTLE%f,STEER%f,GEAR%d,SIGNAL%d,END';
 
-	data = cellfun(@(s) sscanf(s, pattern), string_cell, 'UniformOutput', false);
-	data = cell2mat(data');
+	ddd = cellfun(@(s) sscanf(s, pattern), string_cell, 'UniformOutput', false);
+	ddd = cell2mat(ddd');
 
-	brake = data(1,:);
-	throttle = data(2,:);
-	steering = data(3,:);
+	brake = ddd(1,:);
+	throttle = ddd(2,:);
+	steering = ddd(3,:);
+
+	figure(4); clf
+	subplot(211)
+	plot(throttle)
+	subplot(212)
+	plot(steering)
 end
 
 figure(1); clf
@@ -62,12 +68,12 @@ ylabel('mu')
 ylim([0, 10])
 
 
-figure(4); clf
-if exist('delta_f')
-	idx = find(and(delta_f.Time < tmax, delta_f.Time > tmin))
-	subplot(211)
-	plot(delta_f.Time(idx), squeeze(delta_f.Data(1,1,idx)))
-	subplot(212); hold on
-	plot(lk_cinfo.barrier_val.Time(idx), squeeze(lk_cinfo.barrier_val.Data(idx)))
-	plot(xlim, [0 0], '-g')
-end
+% figure(4); clf
+% if exist('delta_f')
+% 	idx = find(and(delta_f.Time < tmax, delta_f.Time > tmin))
+% 	subplot(211)
+% 	plot(delta_f.Time(idx), squeeze(delta_f.Data(1,1,idx)))
+% 	subplot(212); hold on
+% 	plot(lk_cinfo.barrier_val.Time(idx), squeeze(lk_cinfo.barrier_val.Data(idx)))
+% 	plot(xlim, [0 0], '-g')
+% end

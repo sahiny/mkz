@@ -1,8 +1,8 @@
 % Script to manually modify waypoints along path
 
 tiff_file = '../mcity/mcity.tiff';			% background geotiff layer
-orig_file = '../mcity/mcity_east.ascii';	% path to work with
-save_file = '../mcity/mcity_east.ascii';	% file for saving modified path
+orig_file = 'run-highway.ascii';	% path to work with
+save_file = 'run-highway.ascii';	% file for saving modified path
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

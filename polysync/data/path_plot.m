@@ -19,7 +19,7 @@ function [] = path_plot(file)
 
 	figure(1); clf; 
 	hold on;
-	mapshow('../mcity/mcity.tiff');
+	mapshow('../../mcity/mcity.tiff');
 	plot(long, lat);
 	for i=1:length(long)
 		plot([long(i) long(i)+kappa(i)*tt(i,1)], [lat(i) lat(i)+kappa(i)*tt(i,2)], 'c')

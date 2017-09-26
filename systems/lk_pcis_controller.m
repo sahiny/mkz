@@ -31,17 +31,15 @@
 
   methods
     function obj = lk_pcis_controller(varargin)
-      % lk_controller: lane keeping controller based on a barrier QP.
-      % Finds inputs s.t. L_f B (x,u) > -gam * B(x) which ensures positivity of B.
+      % lk_pcis_controller: lane keeping controller based on a PCIS barrier.
       % 
       % Inputs: 
-      %  - lkstate: state of lane keeping dynamics [Bus: LKBus]
-      %  - accstate: state of acc dynamics [Bus: ACCBus]
-      %  - r_d: road curvature
+      %  - lk_acc_state: state of lane dynamics [Bus: LKACCBus]
       % 
       % Outputs: 
       %  - delta_f: steering angle [rad]
-      % 
+      %  - control_info   [Bus: ControlInfoBus] 
+      %
       % Car parameters:
       %  - M: car mass [kg]
       %  - lf: distance from center of gravity to front axle [m]
@@ -82,7 +80,7 @@
       out = 1;
     end
     function [o1] = getInputNamesImpl(obj)
-      o1 = 'lk_state';
+      o1 = 'lk_acc_state';
     end
     % outputs
     function out = getNumOutputsImpl(obj)
@@ -109,15 +107,20 @@
        c2 = false;
     end
     % update
-    function updateImpl(obj, lk_state)
-      x_lk = [lk_state.y; lk_state.nu; lk_state.dPsi; lk_state.r];
+    function updateImpl(obj, lk_acc_state)
+      x_lk = [lk_acc_state.y; lk_acc_state.nu; lk_acc_state.dPsi; lk_acc_state.r];
 
-      mu = lk_state.mu;
-      r_d = lk_state.r_d;
+      mu = lk_acc_state.mu;
+      r_d = lk_acc_state.r_d;
       
+      if max(abs(x_lk)) > 10
+        % Obviously bogus data
+        return
+      end
+
       if mu < obj.data.con.u_min
         % Use very simple P controller
-        obj.delta_f = -x_lk(1)-0.05*x_lk(3);
+        obj.delta_f = -0.1*(x_lk(1)+0.05*x_lk(3));
         return
       end
        

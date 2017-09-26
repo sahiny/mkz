@@ -18,7 +18,7 @@ function polysync_controller()
 
   % Set up systems
   rd = road;
-  rd.pathfile = '../mcity/mcity_east_lower.ascii';
+  rd.pathfile = '../mcity/highway.ascii';
   rd.circular = 0;
   rd.setup(struct());
 
@@ -27,7 +27,7 @@ function polysync_controller()
   ACC.setup(struct(), DT);
 
   LK = lk_pcis_controller;
-  LK.H_u = 0.25;   % weight in QP for steering (smaller -> less aggressive centering)
+  LK.H_u = 0.05;   % weight in QP for steering (larger -> less aggressive centering)
   LK.setup(struct());
 
   % phase 0: shifting to D
