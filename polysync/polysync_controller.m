@@ -4,6 +4,8 @@ function polysync_controller()
   STOP_DISTANCE = 20;   % start braking [m]
   ST_RATIO = 16;        % steering ratio of car
 
+  WHEEL_RADIUS = 0.24;  % wheel radius [m]
+
   BRAKE_MAX = 0.3;      % maximal braking when stopping
   BRAKE_TIME = 5;       % brake ramp time [s]
 
@@ -14,6 +16,8 @@ function polysync_controller()
 
   sub_mo = polysync.Subscriber('MessageType', 'PlatformMotionMessage', ...
                                'SensorId', RTK_SENSOR_ID);
+
+  sub_wsr = polysync.Subscriber('MessageType', 'PlatformWheelSpeedReportMessage');
 
   % Set up systems
   rd = road;
@@ -37,13 +41,16 @@ function polysync_controller()
 
   % Phase variables
   brake_com = 0;    % braking phase
+  phase = uint8(0);
 
   % Save last time
   last_time = embedded.fi(0, 'Signedness', 'Unsigned', ...
                           'FractionLength', 0, ...
                           'WordLength', 64);
 
-  phase = uint8(0);
+  % Current wheel speed
+  wheel_sp = single(0);
+
   % Shift to D
   shift(pub, ps_gear_position_kind.GEAR_POSITION_DRIVE, 0.01);
 
@@ -52,21 +59,28 @@ function polysync_controller()
   % Control loop
   while phase < uint8(3)
     % Read data
-    [idx, sub_msg] = sub_mo.step();
+    [idx1, msg_mo] = sub_mo.step();
+    [idx2, msg_wsr] = sub_wsr.step();
 
-    if idx > 0
+    if idx2 > 0
+      wheel_sp = WHEEL_RADIUS * ...
+             (msg_wsr.FrontLeft + msg_wsr.FrontRight + ...
+              msg_wsr.RearLeft + msg_wsr.RearRight)/4
+    end
+
+    if idx1 > 0
 
       % Take care of timing
       dt = 0;
       if last_time ~= embedded.fi(0, 'Signedness', 'Unsigned', ...
                                   'FractionLength', 0, ...
                                   'WordLength', 64);
-        dt = double(sub_msg.Timestamp - last_time)/1e6;
+        dt = double(msg_mo.Timestamp - last_time)/1e6;
       end
-      last_time = sub_msg.Timestamp;
+      last_time = msg_mo.Timestamp;
 
       % Convert data
-      rawdata = get_data(sub_msg);
+      rawdata = get_data(msg_mo);
 
       % Tranform data to model states
       [lk_acc_state, road_left] = rd.step(rawdata);
@@ -76,11 +90,11 @@ function polysync_controller()
       end
 
       % Compute model inputs
-      [delta_f, lk_info] = LK(lk_acc_state);
+      [delta_f, lk_info] = LK.step(lk_acc_state);
 
       if phase == uint8(1)
         % ACC controls speed
-        [throttle_com] = ACC(lk_acc_state, dt)
+        [throttle_com] = ACC.step(lk_acc_state, dt)
         pub_msg = get_ba_message([], throttle_com, ST_RATIO*delta_f);
 
       elseif phase == uint8(2)
@@ -88,7 +102,7 @@ function polysync_controller()
         brake_com = max(brake_com + BRAKE_MAX*dt/BRAKE_TIME, BRAKE_MAX);
         pub_msg = get_ba_message(brake_com, [], ST_RATIO*delta_f);
 
-        if abs(rawdata.Vx) <  1e-2
+        if abs(wheel_sp) <  1e-2
           phase = phase + 1;
         end
 
