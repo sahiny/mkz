@@ -42,7 +42,6 @@ function polysync_controller()
   % timing
   last_timestamp = 0;
 
-
   % Phase variables
   brake_com = 0;    % braking phase
   phase = uint8(0);
@@ -85,8 +84,6 @@ function polysync_controller()
 
       % Convert data
       rawdata = get_data(msg_mo);
-
-      dt = sub_msg.Timestamp
 
       % Tranform data to model states
       [lk_acc_state, road_left] = rd.step(rawdata);
