@@ -35,6 +35,10 @@ function polysync_controller()
   % phase 2: stopping
   % phase 3: shifting to P
 
+  % timing
+  last_timestamp = 0;
+
+
   % Phase variables
   brake_com = 0;    % braking phase
 
@@ -51,6 +55,8 @@ function polysync_controller()
 
     if idx > 0
       rawdata = get_data(sub_msg);
+
+      dt = sub_msg.Timestamp
 
       % Tranform data to model states
       [lk_acc_state, road_left] = rd.step(rawdata);
@@ -82,7 +88,6 @@ function polysync_controller()
           
       pub_msg.Header.Timestamp = polysync.GetTimestamp;
       pub.step(pub_msg);    
-      polysync.Sleep(DT);
     end
   end
 
