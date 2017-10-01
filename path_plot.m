@@ -1,8 +1,10 @@
 %% path_plot: plot the path stored in a road object
 function [] = path_plot(file)
 
+	[filename, pathname] = uigetfile;
+	
 	r = road;
-	r.pathfile = file;
+	r.pathfile = strcat(pathname, '/', filename);
 	r.setup(struct('latitude', 0, 'longitude', 0));
 
 	s_vec = 0:0.5:r.len_path;
