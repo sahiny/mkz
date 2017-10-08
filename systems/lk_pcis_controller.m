@@ -195,11 +195,14 @@
         obj.delta_f = u;
       else
         % infeasible: keep control constant
-        status
-        x_lk
-        mu
-        r_d
-        all(A_x*x_lk <= b_x)
+        % status
+        % x_lk
+        % mu
+        % r_d
+        if status ~= -1
+          disp('wassup')
+        end
+        %all(A_x*x_lk <= b_x)
         obj.barrier_val = -0.05;
       end
      
