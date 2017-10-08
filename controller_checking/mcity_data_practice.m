@@ -8,6 +8,8 @@ clc;
 
 %% Constant and Function Import
 
+ST_RATIO = 16;        % steering ratio of car
+
 %Example Dataset
 load('data/run-successful.mat');
 %load('data/run-snake1.mat');
@@ -65,7 +67,6 @@ for k = 1 : test_duration
     temp_lk_acc_state.h 	= lk_acc_state.h.Data(k);
     temp_lk_acc_state.r_d 	= lk_acc_state.r_d.Data(k);
 
-
     %Input for the LK and ACC Systems
 	%delta_f(k) = LK.step( temp_lk_acc_state );
 	throttle(k) = ACC.step( temp_lk_acc_state , Ts );
@@ -73,3 +74,62 @@ for k = 1 : test_duration
 
 end
 
+% Apply PCIS Controller Values in open loop to the LK System
+
+t0 = 1000;
+
+x = double([ [ lk_acc_state.y.Data(t0) ; lk_acc_state.nu.Data(t0) ; lk_acc_state.dPsi.Data(t0) ; lk_acc_state.r.Data(t0) ]; ] );
+
+B_lk = [0; LK.Caf/LK.M; 0; LK.lf*LK.Caf/LK.Iz];
+E_lk = [0; 0; -1; 0];
+
+for k = t0 : test_duration
+
+	% lk_state = [ lk_acc_state.y.Data(k) ; lk_acc_state.nu.Data(k) ; lk_acc_state.dPsi.Data(k) ; lk_acc_state.r.Data(k) ];
+	mu = lk_acc_state.mu.Data(k);
+
+	%----------------------
+	% Create State Matrices
+	%----------------------
+	A_lk = [0, 1, mu, 0; 
+          0, -(LK.Caf+LK.Car)/LK.M/mu, 0, ((LK.lr*LK.Car-LK.lf*LK.Caf)/LK.M/mu - mu); 
+          0, 0, 0, 1;
+          0, (LK.lr*LK.Car-LK.lf*LK.Caf)/LK.Iz/mu,  0, -(LK.lf^2 * LK.Caf + LK.lr^2 * LK.Car)/LK.Iz/mu];
+      
+  	dt = Ts; %obj.data.con.dt;
+
+  	A = eye(4) + A_lk * dt + A_lk^2 * dt^2/2 + A_lk^3 * dt^3/3/2;
+
+  	A_int = eye(4)*dt + A_lk * dt^2/2 + A_lk^2 * dt^3/3/2 + A_lk^3 * dt^4/4/3/2;
+
+	B = A_int * B_lk;
+	E = A_int * E_lk;
+
+
+	%------------
+	%Obtain Input
+	%------------
+
+	delta_f = steering_report.SteeringWheelAngleCommand.Data(k)/ST_RATIO;
+
+	%Create next state update:
+
+	lk_state_dot =  A_lk*x(:,end) + B_lk * delta_f ; %+ E*(mu/) %Assuming that the road is straight.
+
+	x = [ x x(:,end)+lk_state_dot*Ts ];
+
+end
+
+x_meas = [ 	reshape(lk_acc_state.y.Data,1,test_duration) ;
+			reshape(lk_acc_state.nu.Data,1,test_duration) ;
+			reshape(lk_acc_state.dPsi.Data,1,test_duration) ;
+			reshape(lk_acc_state.r.Data,1,test_duration) ];
+
+figure;
+for sp_num = 1 : 4
+	subplot(2,2,sp_num)
+	hold on;
+	%plot(x(sp_num,:))
+	plot(x_meas(sp_num,[t0:end]))
+
+end
