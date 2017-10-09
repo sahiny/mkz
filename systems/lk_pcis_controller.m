@@ -194,9 +194,19 @@
         % qp solved successfully
         obj.delta_f = u;
       else
-        % infeasible: keep control constant
-        obj.delta_f = 0;   % set to 0
-        % obj.barrier_val = -0.05;
+        %infeasible: keep control constant
+        status
+        x_lk
+        mu
+        r_d
+
+        %Debugging
+        % if status ~= -1
+        %   disp('wassup')
+        % end
+        
+        all(A_x*x_lk <= b_x)
+        obj.barrier_val = -0.05;
       end
      
     end

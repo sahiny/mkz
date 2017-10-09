@@ -1,0 +1,29 @@
+% mcity_data_practice.m
+%   This is my first use of Petter's code for driving the Lincoln MKZ
+%   autonomously.
+
+clear all;
+close all;
+clc;
+
+%% Load an example dataset
+
+load('data/run-successful.mat');
+
+%% Plot run(s) of the system using GPS Data
+
+%Because the position calculation appears to be messy let's try to use the 
+%velocity measurements to integrate and find x.
+x0 = zeros(3,1);
+Ts = gpsdata.Velocity.TimeInfo.Increment;
+
+x = [x0];
+for k = 1:length(gpsdata.Velocity.Time,1)
+    x = [x 
+
+f1 = figure;
+for dim = 1:3
+    dim_data = gpsdata.Position.data(dim,:,[2000:end])
+    subplot(1,3,dim)
+    plot(reshape(dim_data,prod( size( dim_data ) ),1 ))
+end
