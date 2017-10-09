@@ -68,7 +68,7 @@ for k = 1 : test_duration
     temp_lk_acc_state.r_d 	= lk_acc_state.r_d.Data(k);
 
     %Input for the LK and ACC Systems
-	%delta_f(k) = LK.step( temp_lk_acc_state );
+	delta_f(k) = LK.step( temp_lk_acc_state );
 	throttle(k) = ACC.step( temp_lk_acc_state , Ts );
 
 
