@@ -76,7 +76,7 @@ end
 
 % Apply PCIS Controller Values in open loop to the LK System
 
-t0 = 1000;
+t0 = 1;
 
 x = double([ [ lk_acc_state.y.Data(t0) ; lk_acc_state.nu.Data(t0) ; lk_acc_state.dPsi.Data(t0) ; lk_acc_state.r.Data(t0) ]; ] );
 
@@ -110,11 +110,11 @@ for k = t0 : test_duration
 	%Obtain Input
 	%------------
 
-	delta_f = steering_report.SteeringWheelAngleCommand.Data(k)/ST_RATIO;
+	%delta_f = steering_report.SteeringWheelAngleCommand.Data(k)/ST_RATIO;
 
 	%Create next state update:
 
-	lk_state_dot =  A_lk*x(:,end) + B_lk * delta_f ; %+ E*(mu/) %Assuming that the road is straight.
+	lk_state_dot =  A_lk*x(:,end) + B_lk * delta_f(k) ; %+ E*(mu/) %Assuming that the road is straight.
 
 	x = [ x x(:,end)+lk_state_dot*Ts ];
 
@@ -132,4 +132,31 @@ for sp_num = 1 : 4
 	%plot(x(sp_num,:))
 	plot(x_meas(sp_num,[t0:end]))
 
+end
+
+%% The Proper A Matrix
+
+disp('Learning an A Matrix')
+
+% I am frustrated by how the A Matrix that we are using seems to be so off. I will try to use the data we have to "learn" what I think the entries of A should be.
+max_speed = max(lk_acc_state.mu.Data)
+min_speed = min(lk_acc_state.mu.Data);
+speed_ind = 1;
+for speed_lb = linspace(min_speed,max_speed - (max_speed-min_speed)/100)
+	%Count the number of data points that fall into each category.
+	%speed_lb
+	disp( ['Number of data points falling into the [' num2str(speed_lb) ',' num2str(speed_lb + (max_speed-min_speed)/100 ) '] range.' ])
+	disp( num2str(sum( and(speed_lb <= reshape(lk_acc_state.mu.Data,test_duration,1), reshape(lk_acc_state.mu.Data,test_duration,1) <= speed_lb + (max_speed-min_speed)/100 )) ) )
+
+	speed_occurs = and(speed_lb <= reshape(lk_acc_state.mu.Data,test_duration,1), reshape(lk_acc_state.mu.Data,test_duration,1) <= speed_lb + (max_speed-min_speed)/100 );
+	speed_occurs = and(speed_occurs,[ones(length(speed_occurs)-1,1) ; 0 ]);
+
+	A_row2{speed_ind} = pinv([ lk_acc_state.nu.Data(speed_occurs) lk_acc_state.r.Data(speed_occurs) ])*( lk_acc_state.nu.Data( [false ; speed_occurs([1:end-1])] ) - B_lk(2)*Ts*delta_f(speed_occurs)' - E_lk(2) * lk_acc_state.r_d.Data(speed_occurs) );
+
+	%Find these rows
+
+
+
+	%Increpement Speed 'Index'
+	speed_ind = speed_ind + 1;
 end
