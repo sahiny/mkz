@@ -193,7 +193,6 @@
       if status > 0
         % qp solved successfully
         obj.delta_f = u;
-        disp('Success!')
       else
         %infeasible: keep control constant
         status

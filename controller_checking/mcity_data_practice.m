@@ -31,11 +31,13 @@ for k = 1:length(gpsdata.Velocity.Time)
     x = [x x(:,end)+gpsdata.Velocity.Data(:,1,k)*Ts];
 end
 
+t = ba_message.Header.Timestamp.Time;
+
 f1 = figure;
 for dim = 1:3
     dim_data = x(dim,:);
     subplot(1,3,dim)
-    plot(reshape(dim_data,prod( size( dim_data ) ),1 ))
+    plot([ -0.1 ; t ],reshape(dim_data,prod( size( dim_data ) ),1 ))
 end
 
 f2 = figure;
@@ -76,7 +78,7 @@ end
 
 % Apply PCIS Controller Values in open loop to the LK System
 
-t0 = 1;
+t0 = 4000;
 
 x = double([ [ lk_acc_state.y.Data(t0) ; lk_acc_state.nu.Data(t0) ; lk_acc_state.dPsi.Data(t0) ; lk_acc_state.r.Data(t0) ]; ] );
 
@@ -110,11 +112,11 @@ for k = t0 : test_duration
 	%Obtain Input
 	%------------
 
-	%delta_f = steering_report.SteeringWheelAngleCommand.Data(k)/ST_RATIO;
+	delta_f0 = steering_report.SteeringWheelAngleCommand.Data(k)/ST_RATIO;
 
 	%Create next state update:
 
-	lk_state_dot =  A_lk*x(:,end) + B_lk * delta_f(k) ; %+ E*(mu/) %Assuming that the road is straight.
+	lk_state_dot =  A_lk*x(:,end) + B_lk * delta_f0 + E* lk_acc_state.r_d.Data(k); %Assuming that the road is straight.
 
 	x = [ x x(:,end)+lk_state_dot*Ts ];
 
@@ -125,38 +127,30 @@ x_meas = [ 	reshape(lk_acc_state.y.Data,1,test_duration) ;
 			reshape(lk_acc_state.dPsi.Data,1,test_duration) ;
 			reshape(lk_acc_state.r.Data,1,test_duration) ];
 
+lk_state_names = {'y','\nu','\Delta \Psi','r'};
+
 figure;
 for sp_num = 1 : 4
 	subplot(2,2,sp_num)
 	hold on;
 	%plot(x(sp_num,:))
-	plot(x_meas(sp_num,[t0:end]))
+	plot(t([t0:end]),x_meas(sp_num,[t0:end]))
 
+	xlabel('Time (s)')
+	ylabel(lk_state_names{sp_num})
+	title(['Simulated State ' num2str(sp_num) '(' lk_state_names{sp_num} ') Trajectory'])
 end
 
-%% The Proper A Matrix
+%
+figure;
+for sp_num = 1 : 4
+	subplot(2,2,sp_num)
+	hold on;
+	%plot(x(sp_num,:))
+	plot(t([t0:t0+2000-1]),x(sp_num,[1:2000]))
 
-disp('Learning an A Matrix')
+	xlabel('Time (s)')
+	ylabel(lk_state_names{sp_num})
+	title(['Simulated State ' num2str(sp_num) '(' lk_state_names{sp_num} ') Trajectory'])
 
-% I am frustrated by how the A Matrix that we are using seems to be so off. I will try to use the data we have to "learn" what I think the entries of A should be.
-max_speed = max(lk_acc_state.mu.Data)
-min_speed = min(lk_acc_state.mu.Data);
-speed_ind = 1;
-for speed_lb = linspace(min_speed,max_speed - (max_speed-min_speed)/100)
-	%Count the number of data points that fall into each category.
-	%speed_lb
-	disp( ['Number of data points falling into the [' num2str(speed_lb) ',' num2str(speed_lb + (max_speed-min_speed)/100 ) '] range.' ])
-	disp( num2str(sum( and(speed_lb <= reshape(lk_acc_state.mu.Data,test_duration,1), reshape(lk_acc_state.mu.Data,test_duration,1) <= speed_lb + (max_speed-min_speed)/100 )) ) )
-
-	speed_occurs = and(speed_lb <= reshape(lk_acc_state.mu.Data,test_duration,1), reshape(lk_acc_state.mu.Data,test_duration,1) <= speed_lb + (max_speed-min_speed)/100 );
-	speed_occurs = and(speed_occurs,[ones(length(speed_occurs)-1,1) ; 0 ]);
-
-	A_row2{speed_ind} = pinv([ lk_acc_state.nu.Data(speed_occurs) lk_acc_state.r.Data(speed_occurs) ])*( lk_acc_state.nu.Data( [false ; speed_occurs([1:end-1])] ) - B_lk(2)*Ts*delta_f(speed_occurs)' - E_lk(2) * lk_acc_state.r_d.Data(speed_occurs) );
-
-	%Find these rows
-
-
-
-	%Increpement Speed 'Index'
-	speed_ind = speed_ind + 1;
 end
