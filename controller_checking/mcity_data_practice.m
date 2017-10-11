@@ -10,6 +10,8 @@ clc;
 
 ST_RATIO = 16;        % steering ratio of car
 
+use_discr_system = false;
+
 %Example Dataset
 load('data/run-successful.mat');
 %load('data/run-snake1.mat');
@@ -107,6 +109,9 @@ for k = t0 : test_duration
 	B = A_int * B_lk;
 	E = A_int * E_lk;
 
+	% A_s = @(s) expm(s*A_lk);
+	% B2 = integral(A_s,0,Ts,'ArrayValued',true) * B_lk;
+	% E2 = integral(A_s,0,Ts,'ArrayValued',true) * E_lk;
 
 	%------------
 	%Obtain Input
@@ -115,10 +120,15 @@ for k = t0 : test_duration
 	delta_f0 = steering_report.SteeringWheelAngleCommand.Data(k)/ST_RATIO;
 
 	%Create next state update:
+	if use_discr_system
+		lk_next_state = expm(A*Ts)*x(:,end) + B*delta_f0 + E*lk_acc_state.r_d.Data(k);
+		x = [x lk_next_state];
+	else
+		lk_state_dot =  A_lk*x(:,end) + B_lk * delta_f0 + E* lk_acc_state.r_d.Data(k); 
 
-	lk_state_dot =  A_lk*x(:,end) + B_lk * delta_f0 + E* lk_acc_state.r_d.Data(k); %Assuming that the road is straight.
+		x = [ x x(:,end)+lk_state_dot*Ts ];
+	end
 
-	x = [ x x(:,end)+lk_state_dot*Ts ];
 
 end
 
