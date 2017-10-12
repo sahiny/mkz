@@ -8,6 +8,7 @@ function [x] = lk_state_evolve( varargin )
 %
 %		Example Usage:
 %			- let_s_evolve( x0 , u_traj , mu_traj , r_d_traj , con )
+%			- let_s_evolve( ... , 'Model',name)
 %
 %
 %		Inputs:
@@ -39,6 +40,16 @@ end
 
 T = T1;
 
+%Check if we want to select a different model.
+model_name = 'Petter'; %Default model
+
+if any( strcmp(varargin,'Model') )
+	model_name = varargin{find(strcmp(varargin,'Model'))+1};
+	if ~any(strcmp({'Petter','Shaobing'},model_name))
+		error('Unrecognized Model name.')
+	end
+end
+
 %Checking fields of sys struct
 
 % con_fields = {'Caf','Car'};
@@ -62,10 +73,17 @@ for t = 1 : T
 	%-----------------------
 	% Create System Matrices
 	%-----------------------
-	A_lk = [0, 1, mu, 0; 
-          0, -(LK_cont.Caf+LK_cont.Car)/LK_cont.M/mu, 0, ((LK_cont.lr*LK_cont.Car-LK_cont.lf*LK_cont.Caf)/LK_cont.M/mu - mu); 
-          0, 0, 0, 1;
-          0, (LK_cont.lr*LK_cont.Car-LK_cont.lf*LK_cont.Caf)/LK_cont.Iz/mu,  0, -(LK_cont.lf^2 * LK_cont.Caf + LK_cont.lr^2 * LK_cont.Car)/LK_cont.Iz/mu];
+	if strcmp(model_name,'Petter')
+		A_lk = [0, 1, mu, 0; 
+	          0, -(LK_cont.Caf+LK_cont.Car)/LK_cont.M/mu, 0, ((LK_cont.lr*LK_cont.Car-LK_cont.lf*LK_cont.Caf)/LK_cont.M/mu - mu); 
+	          0, 0, 0, 1;
+	          0, (LK_cont.lr*LK_cont.Car-LK_cont.lf*LK_cont.Caf)/LK_cont.Iz/mu,  0, -(LK_cont.lf^2 * LK_cont.Caf + LK_cont.lr^2 * LK_cont.Car)/LK_cont.Iz/mu];
+	else
+		A_lk = [0, 1, 0, 0; 
+	        	0, -(LK_cont.Caf+LK_cont.Car)/LK_cont.M/mu, 0, ((LK_cont.lr*LK_cont.Car-LK_cont.lf*LK_cont.Caf)/LK_cont.M/mu - mu); 
+	          	0, 0, 0, 1;
+	          	0, (LK_cont.lr*LK_cont.Car-LK_cont.lf*LK_cont.Caf)/LK_cont.Iz/mu,  0, -(LK_cont.lf^2 * LK_cont.Caf + LK_cont.lr^2 * LK_cont.Car)/LK_cont.Iz/mu];
+	end
 
     B_lk = [0; LK_cont.Caf/LK_cont.M; 0; LK_cont.lf*LK_cont.Caf/LK_cont.Iz];
 	E_lk = [0; 0; -1; 0];

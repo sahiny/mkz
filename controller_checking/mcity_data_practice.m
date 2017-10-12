@@ -168,12 +168,12 @@ end
 
 %% Functionalizing 
 
-wind_size = 20; test_len = 2500
+wind_size = 100; test_len = 2500
 x2 = [];
 for k = t0 : wind_size : t0+test_len
 
 	x2 = [x2 lk_state_evolve(	x_meas(:,k), ...
-								reshape(steering_report.SteeringWheelAngleCommand.Data([k:k+wind_size-1]),wind_size,1) , ...
+								reshape(steering_report.SteeringWheelAngleCommand.Data([k:k+wind_size-1])/ST_RATIO,wind_size,1) , ...
 								lk_acc_state.mu.Data([k:k+wind_size-1]) , ...
 								lk_acc_state.r_d.Data([k:k+wind_size-1]) , ...
 								LK, ...
@@ -181,22 +181,54 @@ for k = t0 : wind_size : t0+test_len
 
 end
 
+% wind_size = 50; test_len = 2500
+x_shaobing = [];
+for k = t0 : wind_size : t0+test_len
+
+	x_shaobing = [x_shaobing 	lk_state_evolve(	x_meas(:,k), ...
+													reshape(steering_report.SteeringWheelAngleCommand.Data([k:k+wind_size-1])/ST_RATIO,wind_size,1) , ...
+													lk_acc_state.mu.Data([k:k+wind_size-1]) , ...
+													lk_acc_state.r_d.Data([k:k+wind_size-1]) , ...
+													LK, Ts , 'Model' , 'Shaobing' ) ];
+
+end
+
 figure('units','normalized','outerposition',[0 0 1 1]);
 for state_num = 1:4
-	temp_axes = subplot(4,2,2*(state_num-1)+1)
+	temp_axes = subplot(4,3,3*state_num-2)
 	plot(t([t0:t0+size(x2,2)-1]),x_meas(state_num,[t0:t0+size(x2,2)-1]))
 	xlabel('Time (s)')
 	ylabel(lk_state_names{state_num})
 	title(['Measured State ' num2str(state_num) '(' lk_state_names{state_num} ') Trajectory'])
 
-	temp_axes2 = subplot(4,2,2*state_num)
+	temp_axes2 = subplot(4,3,3*state_num-1)
 	plot(t([t0:t0+size(x2,2)-1]),x2(state_num,[1:end]))
 	xlabel('Time (s)')
 	ylabel(lk_state_names{state_num})
-	title(['Simulated State ' num2str(state_num) '(' lk_state_names{state_num} ') Trajectory'])
+	title(['Simulated State ' num2str(state_num) '(' lk_state_names{state_num} ') Trajectory, Petter''s Model'])
+
+	temp_axes3 = subplot(4,3,3*state_num)
+	plot(t([t0:t0+size(x2,2)-1]),x_shaobing(state_num,[1:end]))
+	xlabel('Time (s)')
+	ylabel(lk_state_names{state_num})
+	title(['Simulated State ' num2str(state_num) '(' lk_state_names{state_num} ') Trajectory, Shaobing''s Model'])
 
 	temp_axes2.XLim = temp_axes.XLim;
 	temp_axes2.YLim = temp_axes.YLim;
+	temp_axes3.XLim = temp_axes.XLim;
+	temp_axes3.YLim = temp_axes.YLim;
+
+
+end
+
+% Analyzing how much different states diverge during the evolution of the systems
+
+speed_traj = lk_acc_state.mu.Data;
+
+%Specifically how speed might have an impact
+for t = linspace( min(speed_traj) , max(speed_traj) )
+
+
 
 end
 
