@@ -19,6 +19,7 @@ load('data/run-successful.mat');
 %Import functions
 if ~any(strcmp(path,'../systems/'))
 	addpath('../systems/')
+	addpath('functions/')
 end
 
 %% Plot run(s) of the system using GPS Data
@@ -80,7 +81,7 @@ end
 
 % Apply PCIS Controller Values in open loop to the LK System
 
-t0 = 4000;
+t0 = 3501;
 
 x = double([ [ lk_acc_state.y.Data(t0) ; lk_acc_state.nu.Data(t0) ; lk_acc_state.dPsi.Data(t0) ; lk_acc_state.r.Data(t0) ]; ] );
 
@@ -164,3 +165,39 @@ for sp_num = 1 : 4
 	title(['Simulated State ' num2str(sp_num) '(' lk_state_names{sp_num} ') Trajectory'])
 
 end
+
+%% Functionalizing 
+
+wind_size = 20; test_len = 2500
+x2 = [];
+for k = t0 : wind_size : t0+test_len
+
+	x2 = [x2 lk_state_evolve(	x_meas(:,k), ...
+								reshape(steering_report.SteeringWheelAngleCommand.Data([k:k+wind_size-1]),wind_size,1) , ...
+								lk_acc_state.mu.Data([k:k+wind_size-1]) , ...
+								lk_acc_state.r_d.Data([k:k+wind_size-1]) , ...
+								LK, ...
+								Ts  ) ];
+
+end
+
+figure('units','normalized','outerposition',[0 0 1 1]);
+for state_num = 1:4
+	temp_axes = subplot(4,2,2*(state_num-1)+1)
+	plot(t([t0:t0+size(x2,2)-1]),x_meas(state_num,[t0:t0+size(x2,2)-1]))
+	xlabel('Time (s)')
+	ylabel(lk_state_names{state_num})
+	title(['Measured State ' num2str(state_num) '(' lk_state_names{state_num} ') Trajectory'])
+
+	temp_axes2 = subplot(4,2,2*state_num)
+	plot(t([t0:t0+size(x2,2)-1]),x2(state_num,[1:end]))
+	xlabel('Time (s)')
+	ylabel(lk_state_names{state_num})
+	title(['Simulated State ' num2str(state_num) '(' lk_state_names{state_num} ') Trajectory'])
+
+	temp_axes2.XLim = temp_axes.XLim;
+	temp_axes2.YLim = temp_axes.YLim;
+
+end
+
+
