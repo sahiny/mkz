@@ -225,11 +225,11 @@ end
 
 speed_traj = lk_acc_state.mu.Data;
 
-%Specifically how speed might have an impact
-for t = linspace( min(speed_traj) , max(speed_traj) )
+% %Specifically how speed might have an impact
+% for t = linspace( min(speed_traj) , max(speed_traj) )
 
 
 
-end
+% end
 
 

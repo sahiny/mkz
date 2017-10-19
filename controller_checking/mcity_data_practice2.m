@@ -45,13 +45,10 @@ legend('Act','Cmd')
 %Collect Data into state trajectories
 
 LK = lk_pcis_controller;
-LK.H_u = 4;   % weight in QP for steering (larger -> less aggressive centering)
+LK.H_u = 100;   % weight in QP for steering (larger -> less aggressive centering)
 LK.setup(struct());
 
-for i = t0:t0+length(t)-1
-	%Apply LK PCIS controller to data at x
-
-	for k = 1 : test_duration
+for k = t0 : t0+test_duration-1
 
 	temp_lk_acc_state.y 	= lk_acc_state.y.Data(k);
 	temp_lk_acc_state.nu 	= lk_acc_state.nu.Data(k);
@@ -64,7 +61,67 @@ for i = t0:t0+length(t)-1
 
     %Input for the LK and ACC Systems
 	[ delta_f(k) lk_info(k) ] = LK.step( temp_lk_acc_state );
-	
+
 end
 
+figure;
+subplot(2,1,1)
+hold on;
+plot(t,delta_f)
+plot(t,steering_act/ST_RATIO)
+
+xlabel('Time (s)')
+ylabel('Steering Angle (rad)')
+title('lk\_pcis\_controller Output Vs. Car''s Actual Steering')
+
+legend('LK PCIS Controller','Steering Actual')
+
+subplot(2,1,2)
+hold on;
+plot(t,delta_f)
+plot(t,steering_cmd/ST_RATIO)
+
+xlabel('Time (s)')
+ylabel('Steering Angle (rad)')
+title('lk\_pcis\_controller Output Vs. Car''s Commanded Steering')
+
+legend('LK PCIS Controller','Steering Command')
+
+%% Create an Input Trajectory that considers the last input
+
+LK2 = lk_pcis_controller;
+LK2.H_u = 0.1;
+LK2.f_u = 0;
+LK2.setup(struct());
+
+for k = t0 : t0+test_duration-1
+
+	if k > t0
+		release(LK2);
+		LK2 = lk_pcis_controller;
+		LK2.H_u = 0.1;
+		LK2.f_u = -1*LK.H_u*delta_f2(k-1);
+		LK2.setup(struct());
+	end
+
+	temp_lk_acc_state.y 	= lk_acc_state.y.Data(k);
+	temp_lk_acc_state.nu 	= lk_acc_state.nu.Data(k);
+	temp_lk_acc_state.dy 	= lk_acc_state.dy.Data(k);
+    temp_lk_acc_state.mu 	= lk_acc_state.mu.Data(k);
+    temp_lk_acc_state.dPsi 	= lk_acc_state.dPsi.Data(k);
+    temp_lk_acc_state.r 	= lk_acc_state.r.Data(k);
+    temp_lk_acc_state.h 	= lk_acc_state.h.Data(k);
+    temp_lk_acc_state.r_d 	= lk_acc_state.r_d.Data(k);
+
+    %Input for the LK and ACC Systems
+	[ delta_f2(k) lk_info2(k) ] = LK2.step( temp_lk_acc_state );
+
+end
+
+figure;
+hold on;
+plot(t,delta_f)
+plot(t,delta_f2)
+
+legend('1','2')
 end
