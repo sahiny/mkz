@@ -195,10 +195,10 @@
         obj.delta_f = u;
       else
         %infeasible: keep control constant
-        status
-        x_lk
-        mu
-        r_d
+        % status
+        % x_lk
+        % mu
+        % r_d
 
         %Debugging
         % if status ~= -1
