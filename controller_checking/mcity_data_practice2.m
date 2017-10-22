@@ -1,4 +1,4 @@
-function [] = mcity_data_practice2( varargin )
+function [results] = mcity_data_practice2( varargin )
 % 	mcity_data_practice2.m
 %		Testing if there is a better way to generate inputs to the LK system.
 
@@ -89,19 +89,20 @@ legend('LK PCIS Controller','Steering Command')
 
 %% Create an Input Trajectory that considers the last input
 
-LK2 = lk_pcis_controller;
-LK2.H_u = 0.1;
-LK2.f_u = 0;
-LK2.setup(struct());
+% LK2 = lk_pcis_controller;
+% LK2.H_u = 100;
+% LK2.f_u = 0;
+% LK2.setup(struct());
 
 for k = t0 : t0+test_duration-1
 
 	if k > t0
-		release(LK2);
-		LK2 = lk_pcis_controller;
-		LK2.H_u = 0.1;
-		LK2.f_u = -1*LK.H_u*delta_f2(k-1);
-		LK2.setup(struct());
+		%release(LK2);
+		% clear LK2;
+		% LK = lk_pcis_controller;
+		LK.H_u = 100;
+		LK.f_u = -LK.H_u*delta_f2(k-1);
+		% LK.setup(struct());
 	end
 
 	temp_lk_acc_state.y 	= lk_acc_state.y.Data(k);
@@ -114,7 +115,7 @@ for k = t0 : t0+test_duration-1
     temp_lk_acc_state.r_d 	= lk_acc_state.r_d.Data(k);
 
     %Input for the LK and ACC Systems
-	[ delta_f2(k) lk_info2(k) ] = LK2.step( temp_lk_acc_state );
+	[ delta_f2(k) lk_info2(k) ] = LK.step( temp_lk_acc_state );
 
 end
 
@@ -123,5 +124,21 @@ hold on;
 plot(t,delta_f)
 plot(t,delta_f2)
 
-legend('1','2')
+xlabel('Time (s)')
+ylabel('Control Input, \delta_f')
+title('Trajectories for control inputs when a history-respecting term is added')
+legend('Current','Smoothing with u[1]')
+
+%%%%%%%%%%%%%%%%%%%%
+%% Saving Results %%
+%%%%%%%%%%%%%%%%%%%%
+
+results.name = 'mcity_data_practice2';
+results.delta_f = delta_f;
+results.lk_info = lk_info;
+results.delta_f2 = delta_f2;
+results.lk_info2 = lk_info2;
+results.t = t;
+results.t0 = t0;
+
 end

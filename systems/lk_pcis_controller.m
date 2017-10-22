@@ -1,6 +1,13 @@
  classdef lk_pcis_controller < matlab.System & ...
                          matlab.system.mixin.Propagates & ...
                          matlab.system.mixin.Nondirect
+  properties
+    H_x = diag([1 0 0.5 0]);
+    f_x = zeros(4,1);
+    H_u = 4;
+    f_u = 0;
+  end
+
   properties(Nontunable)
     M = 1800;
     lf = 1.2;
@@ -9,12 +16,7 @@
     Car = 120000;
     Iz = 3270;
 
-    H_x = diag([1 0 0.5 0]);
-    f_x = zeros(4,1);
-    H_u = 4;
-    f_u = 0;
-
-    sol_opts = struct('DataType', 'double', 'MaxIter', 200, ...
+    sol_opts = struct('DataType', 'double', 'MaxIter', 50000, ...
                       'FeasibilityTol', 1e-6, 'IntegrityChecks', true);
   end
 
@@ -27,6 +29,7 @@
   properties(DiscreteState)
     delta_f;
     barrier_val;
+    qp_status;
   end
 
   methods
@@ -172,7 +175,7 @@
 
       b_constr(2*m+1:2*m+2,:) = [obj.data.con.df_max;
                                  obj.data.con.df_max];
-
+ 
       % Objective 0.5 x' H x + f' x
       L = chol(H, 'lower');
       Linv = zeros(1,1);
@@ -182,6 +185,11 @@
                       [], zeros(0,1), ...
                       false(size(A_constr,1),1), obj.sol_opts);
 
+      disp(['status = ' num2str(status) ])
+
+      disp(['f = ' num2str(f) ', H = ' num2str(H)])
+      obj.qp_status = status;
+
       % normalized distance from Polyhedron edge
       scale_vec = [obj.data.con.y_max obj.data.con.nu_max ...
                    obj.data.con.psi_max obj.data.con.r_max];
@@ -189,7 +197,7 @@
       d_list = (b_x - A_x*x_lk)./sum(A_x.*A_x, 2) ...
                 .*sqrt(sum(Da.*Da, 2));
       obj.barrier_val = min(d_list);
-                  
+
       if status > 0
         % qp solved successfully
         obj.delta_f = u;
@@ -210,7 +218,7 @@
         delta_f = obj.delta_f;
         control_info.barrier_val = obj.barrier_val;
         control_info.ddy = 0;
-        control_info.qp_status = 0;
+        control_info.qp_status = obj.qp_status;
     end
     
     function [f1, f2] = isInputDirectFeedthroughImpl(~, ~)

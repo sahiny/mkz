@@ -1,4 +1,4 @@
-function [] = mcity_data_analysis( varargin )
+function [results] = mcity_data_analysis( varargin )
 	% mcity_data_practice
 
 	%% Process inputs
@@ -11,6 +11,6 @@ function [] = mcity_data_analysis( varargin )
 			mcity_data_practice
 		end
 		if experim_num == 2
-			mcity_data_practice2
+			results{n} = mcity_data_practice2;
 		end
 end
