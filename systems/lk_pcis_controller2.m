@@ -1,6 +1,12 @@
- classdef lk_pcis_controller < matlab.System & ...
+ classdef lk_pcis_controller2 < matlab.System & ...
                          matlab.system.mixin.Propagates & ...
                          matlab.system.mixin.Nondirect
+  %Description:
+  % This constroller should automatically incorporate the previous buff_len of inputs
+  % into its calculation of the next input. (We want smoothness of the input trajectory)
+  % There will be a quadratic weight on the expression "u[t] - mean([u[t-1],u[t-2],...,u[t-buff_len] ])"
+  % This should primarily affect the mpcqpsolver's objective function.
+
   properties
     H_x = diag([1 0 0.5 0]);
     f_x = zeros(4,1);
@@ -16,6 +22,8 @@
     Car = 120000;
     Iz = 3270;
 
+    buff_len = 1;
+    
     sol_opts = struct('DataType', 'double', 'MaxIter', 200, ...
                       'FeasibilityTol', 1e-6, 'IntegrityChecks', true);
   end
@@ -24,6 +32,7 @@
     B_lk;
     E_lk;
     data;
+    delta_f_prev;   %Buffer containing the buff_len number of previous steering inputs
   end
   
   properties(DiscreteState)
@@ -33,8 +42,8 @@
   end
 
   methods
-    function obj = lk_pcis_controller(varargin)
-      % lk_pcis_controller: lane keeping controller based on a PCIS barrier.
+    function obj = lk_pcis_controller2(varargin)
+      % lk_pcis_controller2: lane keeping controller based on a PCIS barrier.
       % 
       % Inputs: 
       %  - lk_acc_state: state of lane dynamics [Bus: LKACCBus]
@@ -63,6 +72,9 @@
       obj.delta_f = 0;
       
       obj.barrier_val = -0.1;
+
+      %Set Up Buffer of Previous input values
+      obj.delta_f_prev = zeros(obj.buff_len,1);
     end
     
     function ds = getDiscreteStateImpl(obj)
@@ -128,12 +140,26 @@
       % If the speed is too low, use a simple Controller
       % ++++++++++++++++++++++++++++++++++++++++++++++++
 
+      disp(['obj.delta_f_prev = ' num2str(obj.delta_f_prev) ])
+
       if mu < 3
         % Use very simple P controller
         obj.delta_f = -0.1*(x_lk(1)+0.05*x_lk(3));
+
+        %Update Buffer of Previous Inputs
+        obj.delta_f_prev = [ obj.delta_f ; obj.delta_f_prev(1:end-1) ];
         return
       end
-       
+      
+      disp(['obj.delta_f_prev = ' num2str(obj.delta_f_prev) ])
+
+      if (mu < 3)
+        error('WTH.')
+      end
+
+      % Define the System Matrices (given the current speed)
+      % ++++++++++++++++++++++++++++++++++++++++++++++++++++
+
       A_lk = [0, 1, mu, 0; 
           0, -(obj.Caf+obj.Car)/obj.M/mu, 0, ((obj.lr*obj.Car-obj.lf*obj.Caf)/obj.M/mu - mu); 
           0, 0, 0, 1;
@@ -153,21 +179,32 @@
       % E = obj.E_lk*obj.data.con.dt;
       K = zeros(4,1);
       
+      % Define the Objective's Cost Matrices
+      % ++++++++++++++++++++++++++++++++++++ 
+
       R_x = obj.H_x;
       r_x = obj.f_x;
       R_u = obj.H_u;
-      r_u = obj.f_u
+      %r_u = obj.f_u
+      r_u = -R_u*mean(obj.delta_f_prev);
+      disp(['r_u = ' num2str(r_u) ])
+
+      % Retrieve the Safe Set's Polyhedral Representation
+      % +++++++++++++++++++++++++++++++++++++++++++++++++
 
       A_x = obj.data.poly_A;
       b_x = obj.data.poly_b;
 
       m = size(A_x,1);
       
+      % Apply MPC Quadratic Program Solver
+      % ++++++++++++++++++++++++++++++++++
+
       H = zeros(1,1);
       f = zeros(1,1);
       
       H(1,1) = B'*R_x*B + R_u;
-      f(1,1) = r_u + B'*r_x + B'*R_x*(A*x_lk + K + E*r_d);
+      f(1,1) = r_u + B'*R_x*(A*x_lk + K + E*r_d) + B'*r_x;
       
       A_constr = zeros(2*m+2,1);
       b_constr = zeros(2*m+2,1);
@@ -192,6 +229,8 @@
                       [], zeros(0,1), ...
                       false(size(A_constr,1),1), obj.sol_opts)
 
+      disp(['u = ' num2str(u) ] )
+
       % disp(['status = ' num2str(status) ])
 
       % disp(['f = ' num2str(f) ', H = ' num2str(H)])
@@ -208,7 +247,7 @@
       if status > 0
         % qp solved successfully
         obj.delta_f = u;
-        disp(['obj.delta_f = ' num2str(obj.delta_f) ])
+
       else
         %infeasible: keep control constant
         % status
@@ -219,7 +258,11 @@
         all(A_x*x_lk <= b_x);
         obj.barrier_val = -0.05;
       end
-     
+
+      %Update Buffer of Previous Inputs
+      obj.delta_f_prev = [ obj.delta_f ; obj.delta_f_prev(1:end-1) ];
+      disp(['delta_f_prev = ' num2str([ obj.delta_f ; obj.delta_f_prev(1:end-1) ]) ])
+
     end
 
     function [delta_f, control_info] = outputImpl(obj, ~, ~)
