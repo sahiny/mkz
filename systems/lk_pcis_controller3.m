@@ -168,13 +168,24 @@
       % E = obj.E_lk*obj.data.con.dt;
       K = zeros(4,1);
       
+      % Define System Matrices for trajectories
+      % +++++++++++++++++++++++++++++++++++++++
+
+      sys0.A  = A;
+      sys0.B  = B;
+      sys0.C  = C;
+      sys0.K  = K;
+      sys0.x0 = x_lk;
+
+      [G,H,C_big,x0_mat] = create_skaf_n_boyd_matrices(sys,T)
+
       % Define the Objective's Cost Matrices
       % ++++++++++++++++++++++++++++++++++++ 
 
       R_x = obj.H_x;
       r_x = obj.f_x;
       R_u = obj.H_u;
-      r_u = -R_u*mean(obj.delta_f_prev);
+      r_u = obj.f_u;
 
       % Retrieve the Safe Set's Polyhedral Representation
       % +++++++++++++++++++++++++++++++++++++++++++++++++
