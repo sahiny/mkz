@@ -74,11 +74,6 @@ LK.setup(struct());
 LK2 = lk_pcis_controller2;
 LK2.H_u = 100;
 LK2.setup(struct());
-LK2.changeBuffLen(5);
-
-LK3 = lk_pcis_controller3;
-LK3.H_u = 100;
-LK3.setup(struct());
 
 for k = t0 : t0+test_duration-1
 
@@ -92,47 +87,32 @@ for k = t0 : t0+test_duration-1
     temp_lk_acc_state.r_d 	= lk_acc_state.r_d.Data(k);
 
     %Input for the LK and ACC Systems
-	[ exp1.LK.delta_f(k) exp1.LK.lk_info(k) ] = LK.step( temp_lk_acc_state );
-	[ exp1.LK2.delta_f(k) exp1.LK2.lk_info(k) ] = LK2.step(temp_lk_acc_state);
-	[ exp1.LK3.delta_f(k) exp1.LK3.lk_info(k) ] = LK3.step(temp_lk_acc_state);
+	[ delta_f(k) lk_info(k) ] = LK.step( temp_lk_acc_state );
 
 end
 
 figure;
-subplot(3,1,1)
+subplot(2,1,1)
 hold on;
 plot(t,steering_cmd/ST_RATIO)
-plot(t,exp1.LK.delta_f)
+plot(t,steering_act/ST_RATIO)
+
+xlabel('Time (s)')
+ylabel('Steering Angle (rad)')
+title('Car'' Commanded Steering Vs. Car''s Actual Steering')
+
+legend('Command','Actual')
+
+subplot(2,1,2)
+hold on;
+plot(t,steering_cmd/ST_RATIO)
+plot(t,delta_f)
 
 xlabel('Time (s)')
 ylabel('Steering Angle (rad)')
 title('lk\_pcis\_controller Output Vs. Car''s Commanded Steering')
 
-legend('Command','1')
-
-subplot(3,1,2)
-hold on;
-plot(t,steering_cmd/ST_RATIO)
-plot(t,exp1.LK2.delta_f)
-
-xlabel('Time (s)')
-ylabel('Steering Angle (rad)')
-title('lk\_pcis\_controller2 Output Vs. Car''s Commanded Steering')
-
-legend('Command','2')
-
-subplot(3,1,3)
-hold on;
-plot(t,steering_cmd/ST_RATIO)
-plot(t,exp1.LK3.delta_f)
-
-xlabel('Time (s)')
-ylabel('Steering Angle (rad)')
-title('lk\_pcis\_controller3 Output Vs. Car''s Commanded Steering')
-
-legend('Command','3')
-
-
+legend('Steering Command','LK PCIS Controller')
 
 disp(' ')
 disp('Finished plotting the results of experiment 1 (duplication of commanded steering).')
@@ -144,7 +124,9 @@ disp('==========================================================================
 %%%%%%%%%%%%%%%%%%%%
 
 results.name = 'mcity_data_practice2';
-results.exp1 = exp1;
+results.delta_f = delta_f;
+results.lk_info = lk_info;
+results.exp2 = exp2;
 results.t = t;
 results.t0 = t0;
 
