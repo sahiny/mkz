@@ -63,6 +63,7 @@
       obj.delta_f = 0;
       
       obj.barrier_val = -0.1;
+      obj.qp_status = 0;
     end
     
     function ds = getDiscreteStateImpl(obj)
@@ -208,7 +209,6 @@
       if status > 0
         % qp solved successfully
         obj.delta_f = u;
-        disp(['obj.delta_f = ' num2str(obj.delta_f) ])
       else
         %infeasible: keep control constant
         % status
