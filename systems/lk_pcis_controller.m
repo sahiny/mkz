@@ -114,8 +114,6 @@
     function updateImpl(obj, lk_acc_state)
       
       % Retrieve State
-      % ++++++++++++++
-
       x_lk = [lk_acc_state.y; lk_acc_state.nu; lk_acc_state.dPsi; lk_acc_state.r];
 
       mu = lk_acc_state.mu;
@@ -127,8 +125,6 @@
       end
 
       % If the speed is too low, use a simple Controller
-      % ++++++++++++++++++++++++++++++++++++++++++++++++
-
       if mu < 3
         % Use very simple P controller
         obj.delta_f = -0.1*(x_lk(1)+0.05*x_lk(3));
@@ -149,9 +145,6 @@
       B = A_int * obj.B_lk;
       E = A_int * obj.E_lk;
 
-      % A = A_lk*obj.data.con.dt + eye(4);
-      % B = obj.B_lk*obj.data.con.dt;
-      % E = obj.E_lk*obj.data.con.dt;
       K = zeros(4,1);
       
       R_x = obj.H_x;
@@ -193,9 +186,6 @@
                       [], zeros(0,1), ...
                       false(size(A_constr,1),1), obj.sol_opts)
 
-      % disp(['status = ' num2str(status) ])
-
-      % disp(['f = ' num2str(f) ', H = ' num2str(H)])
       obj.qp_status = status;
 
       % normalized distance from Polyhedron edge
@@ -210,13 +200,7 @@
         % qp solved successfully
         obj.delta_f = u;
       else
-        %infeasible: keep control constant
-        % status
-        % x_lk
-        % mu
-        % r_d
-        
-        all(A_x*x_lk <= b_x);
+        %infeasible: keep control constant       
         obj.barrier_val = -0.05;
       end
      
