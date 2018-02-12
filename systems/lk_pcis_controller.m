@@ -144,13 +144,11 @@
 
       B = A_int * obj.B_lk;
       E = A_int * obj.E_lk;
-
-      K = zeros(4,1);
       
       R_x = obj.H_x;
       r_x = obj.f_x;
       R_u = obj.H_u;
-      r_u = obj.f_u
+      r_u = obj.f_u;
 
       A_x = obj.data.poly_A;
       b_x = obj.data.poly_b;
@@ -161,21 +159,18 @@
       f = zeros(1,1);
       
       H(1,1) = B'*R_x*B + R_u;
-      f(1,1) = r_u + B'*r_x + B'*R_x*(A*x_lk + K + E*r_d);
+      f(1,1) = r_u + B'*r_x + B'*R_x*(A*x_lk + E*r_d);
       
-      A_constr = zeros(2*m+2,1);
-      b_constr = zeros(2*m+2,1);
+      A_constr = zeros(m+2,1);
+      b_constr = zeros(m+2,1);
       
-      A_constr(1:m,:) = A_x*B;
-      A_constr(m+1:2*m,:) = A_x*B;
-      
-      A_constr(2*m+1:2*m+2,:) = [1;-1];
+      A_constr(1:m,:) = A_x*B;      
+      A_constr(m+1:m+2,:) = [1;-1];
     
-      b_constr(1:m,:)     = b_x -A_x*A*x_lk - A_x*E*( obj.data.con.rd_max);
-      b_constr(m+1:2*m,:) = b_x -A_x*A*x_lk - A_x*E*(-obj.data.con.rd_max);
+      b_constr(1:m,:)     = b_x - A_x*A*x_lk - A_x*E*r_d;
 
-      b_constr(2*m+1:2*m+2,:) = [obj.data.con.df_max;
-                                 obj.data.con.df_max];
+      b_constr(m+1:m+2,:) = [obj.data.con.df_max;
+                             obj.data.con.df_max];
  
       % Objective 0.5 x' H x + f' x
       L = chol(H, 'lower');
@@ -184,7 +179,7 @@
       
       [u, status] = mpcqpsolver(Linv, f, -A_constr, -b_constr, ...
                       [], zeros(0,1), ...
-                      false(size(A_constr,1),1), obj.sol_opts)
+                      false(size(A_constr,1),1), obj.sol_opts);
 
       obj.qp_status = status;
 

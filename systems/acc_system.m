@@ -1,4 +1,4 @@
-function [sys,x0,str,ts] = lk_system(t,x,u,flag,init)
+function [sys,x0,str,ts] = acc_system(t,x,u,flag,init)
 
 switch flag
 
@@ -44,10 +44,10 @@ end
 function [sys,x0,str,ts]=mdlInitializeSizes(init)
 
 sizes = simsizes;
-sizes.NumContStates  = 4;
+sizes.NumContStates  = 2;
 sizes.NumDiscStates  = 0;
-sizes.NumOutputs     = 4;
-sizes.NumInputs      = 3;
+sizes.NumOutputs     = 2;
+sizes.NumInputs      = 4;
 sizes.DirFeedthrough = 1;
 sizes.NumSampleTimes = 1;
 
@@ -64,31 +64,22 @@ ts  = [0 0];
 %=============================================================================
 %
 function sys=mdlDerivatives(~,x,u)
-  M = 1800;
-  lf = 1.2;
-  lr = 1.65;
-  Caf = 140000;
-  Car = 120000;
-  Iz = 3270;
+  m = 1800;
+  f0 = 74.63;
+  f1 = 40.59;
 
-  mu = u(1);
-  if mu < 1
-     sys = [0;0;0;0];
-     return
-  end
-  r_d = u(2);
-  delta_f = u(3);
+  F_w = u(1);
+  v_lead = u(2);
+  nu = u(3);
+  r = u(4);
 
-  A_lk = [0, 1, mu, 0; 
-      0, -(Caf+Car)/M/mu, 0, ((lr*Car-lf*Caf)/M/mu - mu); 
-      0, 0, 0, 1;
-      0, (lr*Car-lf*Caf)/Iz/mu,  0, -(lf^2 * Caf + lr^2 * Car)/Iz/mu];
-  B_lk = [0; Caf/M; 0; lf*Caf/Iz];
-  E_lk = [0; 0; -1; 0];  
+  A_acc = [-f1/m 0; -1 0];
+  F_acc = [-f0/m - nu*r; v_lead];
+  B_acc = [1/m; 0];
   
-  sys = A_lk * x + B_lk * delta_f + E_lk * r_d;
+  sys = A_acc * x + B_acc * F_w + F_acc;
 
-  % end mdlDerivatives
+% end mdlDerivatives
 %
 %=============================================================================
 % mdlOutputs
