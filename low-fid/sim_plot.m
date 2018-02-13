@@ -74,3 +74,5 @@ hold on
 plot(lk_acc_state.h.Time, lk_acc_state.h.Data(:))
 plot(xlim, [L_lk.con.h_min L_lk.con.h_min], '--g')
 ylabel('h')
+
+save('lowfid_sim.mat', 'lk_acc_state', 'delta_f', 'F_w')

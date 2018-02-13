@@ -1,13 +1,13 @@
 %% path_plot: plot the path stored in a road object
 function [] = path_plot(file)
 
-	[filename, pathname] = uigetfile;
+	[filename, pathname] = uigetfile('*');
 	
 	r = road;
 	r.pathfile = strcat(pathname, '/', filename);
 	r.setup(struct('latitude', 0, 'longitude', 0));
 
-	s_vec = 0:0.5:r.len_path;
+	s_vec = 0.01:0.5:r.len_path;
 
 	[rc, drc, kappa] = arrayfun(@(s) r.get_pos(s), s_vec, ...
 						  		'UniformOutput', false);
@@ -21,11 +21,15 @@ function [] = path_plot(file)
 
 	figure(1); clf; 
 	hold on;
-	mapshow('mcity/mcity.tiff');
+	% mapshow('mcity/mcity.tiff');
 	plot(long, lat);
 	for i=1:length(long)
 		plot([long(i) long(i)+kappa(i)*tt(i,1)], [lat(i) lat(i)+kappa(i)*tt(i,2)], 'c')
 	end
+
+	csvwrite('trajectory.csv', rc')
+	csvwrite('curvature.csv', [s_vec; kappa]')
+
 	% plot(xr, yr, '*');
 	figure(2); clf;
 	plot(s_vec, kappa);
