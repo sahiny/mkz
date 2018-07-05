@@ -1,6 +1,6 @@
 %clear all;close all;clc;
 % plots responses of acc and lk pid controllers of chosen experiment
-experiment_to_test = 4;
+experiment_to_test = 5;
 mat_names = {'jun29_test1_possibly'...  %1
         ,'jun29_test2_possibly'...  %2
         ,'jun29_test3_possibly'...  %3
@@ -77,6 +77,10 @@ new_filename = strrep(filename,'_', '\_');
 	brake_ba = ba_data_vec(1,:);
 	throttle_ba = ba_data_vec(2,:);
 	steering_ba = ba_data_vec(3,:);
+    
+    idx_brake = find(brake_ba,1);
+    idx_throttle = find(throttle_ba,1);
+    
 
 state = struct();
 
@@ -85,7 +89,7 @@ T = length(squeeze(lk_acc_state.y.Time));
 dt = lk_acc_state.y.Time(2)-lk_acc_state.y.Time(1);
 Steering = zeros(T,1);
 Throttle = zeros(T,1);
-for i=1:T 
+for i=idx_throttle:T 
     state.y = lk_acc_state.y.Data(i);
     state.dy = lk_acc_state.dy.Data(i);
     state.mu = lk_acc_state.mu.Data(i);
@@ -98,7 +102,6 @@ for i=1:T
     Steering(i) = LK.step(state, dt);
     Throttle(i) = ACC.step(state, dt);
 end
-Steering = Steering/GAINS_LK(1);
 
 % plot LK states
 % figure;clf;hold on;
@@ -131,26 +134,36 @@ r_clean = r(idx_r);
 % plot(idx_r*0.01, r_clean);
 % ylabel('r')
 
-figure;clf;
-hold on
-plot(idx_r*0.01, 10*r_clean,'.');
-plot(idx_y*0.01, y_clean,'.');
-idx_y = idx_y+1;
-idx_y = idx_y(1:end-1);
-plot(lk_acc_state.y.Time(idx_y), Steering(idx_y),'.');
-plot(lk_acc_state.y.Time(idx_y), steering_ba(idx_y),'.');
-legend('10r','y','steering', 'steering_ba');
+% figure;clf;
+% hold on
+% % plot(idx_r*0.01, 10*r_clean,'.');
+% % % plot(idx_y*0.01, y_clean,'.');
+% % idx_y = idx_y+1;
+% % idx_y = idx_y(1:end-1);
+% plot(lk_acc_state.y.Time(idx_brake:end), lk_acc_state.y.Data(idx_brake:end),'.');
+% plot(lk_acc_state.y.Time(idx_throttle:end), Steering(idx_throttle:end),'.');
+% plot(lk_acc_state.y.Time(idx_brake:end), steering_ba(idx_brake:end),'.');
+% plot(steering_report.SteeringWheelAngle.Time, squeeze(steering_report.SteeringWheelAngle.Data),'.');
+% legend('y','steering_recreated', 'steering_ba', 'steering_report');
+% axis([idx_brake*0.01 T*0.01 -10 10])
 
-figure;clf;
-hold on
-mu = lk_acc_state.mu.Data;
-idx_mu = find(abs(mu)<100);
-mu_clean = mu(idx_mu);
-plot(idx_mu*0.01, mu_clean);
-plot(lk_acc_state.y.Time(idx_mu), 10*brake_ba(idx_mu),'.');
-plot(lk_acc_state.y.Time(idx_mu), 10*throttle_ba(idx_mu),'.');
-plot(lk_acc_state.y.Time(6000:10000), 10*Throttle(6000:10000),'.');
+steering_recreated = Steering;
+throttle_recreated = Throttle;
+idx_start_test = idx_brake;
+idx_start_controllers = idx_throttle;
+idx_clean_lk_acc_state = idx_y;
+idx_clean_steering = idx_y(1:end-1)+1;
 
-legend('vEgo','brake_ba', 'throttle_ba','throttle_acc');
-title(new_filename);
+if abs(1-experiment_to_test) < 2
+    idx_end_test = 6059;
+elseif abs(4-experiment_to_test) < 0.1
+    idx_end_test = 9854;
+elseif abs(5-experiment_to_test) < 0.1
+    idx_end_test = 8876;
+end
+
+save(['run', num2str(experiment_to_test)], 'ba_data_vec', 'gpsdata','lk_acc_state','rawdata',...
+'steering_report', 'steering_recreated', 'throttle_recreated',...
+    'idx_clean_lk_acc_state','idx_clean_steering','idx_start_test','idx_start_controllers','idx_end_test');
+
 

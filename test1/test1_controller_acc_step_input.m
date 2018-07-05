@@ -153,3 +153,6 @@ function test1_controller_acc_step_input()
 
   shift(pub, ps_gear_position_kind.GEAR_POSITION_PARK, 0.01);
 end
+
+
+% max_steering  = 2.5*pi;
